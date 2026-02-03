@@ -1,0 +1,26 @@
+# ─ ─── Folders ─── ─ #
+.idea/
+.vscode/
+.venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+.debug/
+tools
+
+# ─ ─── Files ─── ─ #
+example*.py
+publish.sh
+
+# ─ ─── Extensions ─── ─ #
+*.env
+*.log
+*.tmp
+*.bak
+.DS_Store
+thumbs.db
