@@ -8,6 +8,5 @@ __all__: list[str] = ["run_server"]
 
 def run_server() -> None:
     """Run the Anthropic API-compatible server."""
-
-    # TODO: Implement FastAPI server with Anthropic API compatibility
-    raise NotImplementedError("API server not yet implemented. Coming soon!")
+    from .server import run_server as _run
+    _run()
