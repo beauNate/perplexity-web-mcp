@@ -60,10 +60,12 @@ pwm-auth
 This will:
 1. Prompt for your Perplexity email
 2. Send a verification code
-3. Save your session token to `.env`
+3. Save your session token to `~/.config/perplexity-web-mcp/token`
 4. Display your subscription tier (Free/Pro/Max)
 
-**Note**: Session tokens typically last ~30 days (NextAuth default). Re-run `pwm-auth` if you get authentication errors.
+The token is stored globally, so you only need to authenticate once. Both the MCP server and API server will automatically use it.
+
+**Note**: Session tokens typically last ~30 days. Re-run `pwm-auth` if you get 403 errors.
 
 ---
 
@@ -73,17 +75,14 @@ Use Perplexity models as MCP tools in Claude Desktop, Cursor, or other MCP clien
 
 ### Setup
 
-Add to your MCP client configuration (Claude Desktop, Cursor, etc.):
+After running `pwm-auth`, add to your MCP client configuration (Claude Desktop, Cursor, etc.):
 
 **If installed with pipx or pip (Option A/B):**
 ```json
 {
   "mcpServers": {
     "perplexity": {
-      "command": "pwm-mcp",
-      "env": {
-        "PERPLEXITY_SESSION_TOKEN": "your_token_here"
-      }
+      "command": "pwm-mcp"
     }
   }
 }
@@ -94,16 +93,15 @@ Add to your MCP client configuration (Claude Desktop, Cursor, etc.):
 {
   "mcpServers": {
     "perplexity": {
-      "command": "/path/to/perplexity-web-mcp/.venv/bin/pwm-mcp",
-      "env": {
-        "PERPLEXITY_SESSION_TOKEN": "your_token_here"
-      }
+      "command": "/path/to/perplexity-web-mcp/.venv/bin/pwm-mcp"
     }
   }
 }
 ```
 
-**Note**: Replace `/path/to/perplexity-web-mcp` with the actual path where you cloned the repo.
+The token is loaded automatically from `~/.config/perplexity-web-mcp/token` (created by `pwm-auth`).
+
+**Override token** (optional): Add `"env": {"PERPLEXITY_SESSION_TOKEN": "..."}` to use a different token.
 
 ### Available MCP Tools
 

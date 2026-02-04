@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from os import environ
 from typing import Literal
 
 from fastmcp import FastMCP
@@ -11,6 +10,7 @@ from perplexity_web_mcp.config import ClientConfig, ConversationConfig
 from perplexity_web_mcp.core import Perplexity
 from perplexity_web_mcp.enums import CitationMode, SearchFocus, SourceFocus
 from perplexity_web_mcp.models import Model, Models
+from perplexity_web_mcp.token_store import get_token_or_raise
 
 
 mcp = FastMCP(
@@ -58,14 +58,7 @@ def _get_client() -> Perplexity:
     global _client  # noqa: PLW0603
 
     if _client is None:
-        token = environ.get("PERPLEXITY_SESSION_TOKEN", "")
-
-        if not token:
-            raise ValueError(
-                "PERPLEXITY_SESSION_TOKEN environment variable is required. "
-                "Set it with: export PERPLEXITY_SESSION_TOKEN='your_token_here'"
-            )
-
+        token = get_token_or_raise()
         _client = Perplexity(token, config=ClientConfig())
 
     return _client

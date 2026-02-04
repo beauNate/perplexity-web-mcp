@@ -48,6 +48,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from perplexity_web_mcp import Perplexity, ConversationConfig, Models
 from perplexity_web_mcp.enums import CitationMode
 from perplexity_web_mcp.models import Model
+from perplexity_web_mcp.token_store import load_token
 # Tool calling disabled for now - models don't reliably follow format instructions
 # from perplexity_web_mcp.api.tool_calling import (...)
 from perplexity_web_mcp.api.session_manager import (
@@ -77,16 +78,11 @@ class ServerConfig:
     @classmethod
     def from_env(cls) -> "ServerConfig":
         """Load from environment."""
-        try:
-            from dotenv import load_dotenv
-            load_dotenv()
-        except ImportError:
-            pass
-        
-        session_token = os.getenv("PERPLEXITY_SESSION_TOKEN")
+        # Try to load from token store (env var or ~/.config/perplexity-web-mcp/token)
+        session_token = load_token()
         if not session_token:
             raise ValueError(
-                "PERPLEXITY_SESSION_TOKEN required. "
+                "No Perplexity session token found. "
                 "Run 'pwm-auth' to authenticate."
             )
         

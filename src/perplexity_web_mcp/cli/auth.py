@@ -15,6 +15,8 @@ from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
+from perplexity_web_mcp.token_store import save_token as save_token_to_config
+
 
 BASE_URL: str = "https://www.perplexity.ai"
 ENV_KEY: str = "PERPLEXITY_SESSION_TOKEN"
@@ -227,7 +229,7 @@ def _display_user_info(user_info: UserInfo) -> None:
 
 
 def _display_and_save_token(token: str) -> None:
-    """Display token, user info, and optionally save to .env file."""
+    """Display token, user info, and save to config directory."""
 
     console.print("\n[bold green]Authentication successful![/bold green]\n")
 
@@ -240,9 +242,16 @@ def _display_and_save_token(token: str) -> None:
     # Show token
     console.print(f"[bold white]Session Token:[/bold white]\n[dim]{token[:50]}...{token[-20:]}[/dim]\n")
 
-    prompt_text = f"Save token to [bold yellow].env[/bold yellow] file ({ENV_KEY})?"
+    # Always save to config directory (~/.config/perplexity-web-mcp/token)
+    if save_token_to_config(token):
+        console.print("[green]Token saved to ~/.config/perplexity-web-mcp/token[/green]")
+    else:
+        console.print("[red]Failed to save token to config directory.[/red]")
 
-    if Confirm.ask(prompt_text, default=True, console=console):
+    # Optionally also save to local .env file
+    prompt_text = f"Also save to local [bold yellow].env[/bold yellow] file ({ENV_KEY})?"
+
+    if Confirm.ask(prompt_text, default=False, console=console):
         if update_env(token):
             console.print("[green]Token saved to .env successfully.[/green]")
         else:
@@ -277,7 +286,7 @@ def auth_non_interactive(email: str, code: str | None = None, auto_save: bool = 
     Args:
         email: Perplexity account email
         code: 6-digit verification code (if None, sends code and returns None)
-        auto_save: Whether to automatically save token to .env
+        auto_save: Whether to automatically save token to config
         
     Returns:
         Session token if code provided, None if code was sent
@@ -309,10 +318,10 @@ def auth_non_interactive(email: str, code: str | None = None, auto_save: bool = 
             print(f"Authenticated as: {user_info.email} ({user_info.tier_display})")
         
         if auto_save:
-            if update_env(token):
-                print("Token saved to .env")
+            if save_token_to_config(token):
+                print("Token saved to ~/.config/perplexity-web-mcp/token")
             else:
-                print("Warning: Failed to save to .env")
+                print("Warning: Failed to save token to config")
         
         # Output token for capture
         print(f"TOKEN={token}")
