@@ -152,6 +152,14 @@ The token is loaded automatically from `~/.config/perplexity-web-mcp/token` (cre
 | `pplx_grok_thinking` | Grok 4.1 with extended thinking |
 | `pplx_kimi_thinking` | Kimi K2.5 (thinking always on) |
 
+**Authentication Tools** (for AI-assisted re-authentication):
+
+| Tool | Description |
+|------|-------------|
+| `pplx_auth_status` | Check if authenticated and show subscription tier |
+| `pplx_auth_request_code` | Send verification code to email |
+| `pplx_auth_complete` | Complete auth with email and 6-digit code |
+
 **Source Focus Options**: All tools support `source_focus` parameter:
 - `web` (default) - General web search
 - `academic` - Academic/scholarly sources
