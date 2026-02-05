@@ -49,11 +49,12 @@ Enable Perplexity web models to execute local tools (Read, Write, Bash) through 
 - No system prompt distinction — everything appears as user content
 - Models default to explaining rather than executing
 
-**Potential research directions:**
-- How Ollama enables tool calling (grammars? constrained decoding?)
-- Hermes function calling format (trained into many open models)
-- Other approaches that have made non-tool-trained models produce structured output
-- Whether Perplexity's internal tool support could be leveraged
+**Research completed (2026-02-04):**
+- Ollama uses prompt templates + post-processing (works because models are fine-tuned on tool-calling data)
+- Hermes format requires training — won't work through prompting alone
+- Pure prompt engineering achieves 40-60% reliability at best
+- Formats most likely to work: Python in markdown blocks, simple key-value patterns
+- Fundamental limitation confirmed: training objective mismatch cannot be overcome with prompts alone
 
 ## Constraints
 
@@ -65,8 +66,11 @@ Enable Perplexity web models to execute local tools (Read, Write, Bash) through 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Focus on pure solution | User preference — avoid latency/complexity of intermediate model | — Pending |
-| Research-first approach | Previous attempts failed — need new angles before more implementation | — Pending |
+| Focus on pure solution | User preference — avoid latency/complexity of intermediate model | Confirmed |
+| Research-first approach | Previous attempts failed — need new angles before more implementation | Complete |
+| Accept probabilistic behavior | Research shows 40-60% max reliability without model-level support | Pending user confirmation |
+| Use training-data-familiar formats | Markdown code blocks appear frequently in model training | Recommended |
+| Build flexible parsing | Models will deviate from any format — need multi-strategy extraction | Recommended |
 
 ---
 *Last updated: 2026-02-04 after initialization*
