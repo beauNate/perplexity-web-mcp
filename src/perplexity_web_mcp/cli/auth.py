@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 from sys import exit
 from typing import NoReturn
 
@@ -12,14 +11,13 @@ from curl_cffi.requests import Session
 from orjson import loads
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm, Prompt
+from rich.prompt import Prompt
 from rich.table import Table
 
-from perplexity_web_mcp.token_store import save_token as save_token_to_config
+from perplexity_web_mcp.token_store import load_token, save_token as save_token_to_config
 
 
 BASE_URL: str = "https://www.perplexity.ai"
-ENV_KEY: str = "PERPLEXITY_SESSION_TOKEN"
 SESSION_COOKIE_NAME: str = "__Secure-next-auth.session-token"
 
 console = Console(stderr=True, soft_wrap=True)
@@ -103,35 +101,6 @@ def get_user_info(token: str) -> UserInfo | None:
         pass
     return None
 
-
-def update_env(token: str) -> bool:
-    """Securely updates the .env file with the session token."""
-
-    path = Path(".env")
-    line_entry = f'{ENV_KEY}="{token}"'
-
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
-        updated = False
-        new_lines = []
-
-        for line in lines:
-            if line.strip().startswith(ENV_KEY):
-                new_lines.append(line_entry)
-                updated = True
-            else:
-                new_lines.append(line)
-
-        if not updated:
-            if new_lines and new_lines[-1] != "":
-                new_lines.append("")
-            new_lines.append(line_entry)
-
-        path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-        return True
-
-    except Exception:
-        return False
 
 
 def _initialize_session() -> tuple[Session, str]:
@@ -242,20 +211,11 @@ def _display_and_save_token(token: str) -> None:
     # Show token
     console.print(f"[bold white]Session Token:[/bold white]\n[dim]{token[:50]}...{token[-20:]}[/dim]\n")
 
-    # Always save to config directory (~/.config/perplexity-web-mcp/token)
+    # Save to config directory (~/.config/perplexity-web-mcp/token)
     if save_token_to_config(token):
         console.print("[green]Token saved to ~/.config/perplexity-web-mcp/token[/green]")
     else:
         console.print("[red]Failed to save token to config directory.[/red]")
-
-    # Optionally also save to local .env file
-    prompt_text = f"Also save to local [bold yellow].env[/bold yellow] file ({ENV_KEY})?"
-
-    if Confirm.ask(prompt_text, default=False, console=console):
-        if update_env(token):
-            console.print("[green]Token saved to .env successfully.[/green]")
-        else:
-            console.print("[red]Failed to save to .env file.[/red]")
 
 
 def _show_header() -> None:
@@ -339,6 +299,24 @@ def main() -> NoReturn:
     # Check for non-interactive mode (CLI args)
     args = sys.argv[1:]
     
+    if "--check" in args:
+        # Check if already authenticated
+        token = load_token()
+        if not token:
+            console.print("[red]Not authenticated.[/red] No saved token found.")
+            console.print("Run [bold]pwm-auth[/bold] to log in.")
+            exit(1)
+        
+        user_info = get_user_info(token)
+        if user_info:
+            console.print("[bold green]Authenticated[/bold green]\n")
+            _display_user_info(user_info)
+            exit(0)
+        else:
+            console.print("[red]Token expired or invalid.[/red]")
+            console.print("Run [bold]pwm-auth[/bold] to re-authenticate.")
+            exit(1)
+
     if "--email" in args:
         # Non-interactive mode for AI agents
         email_idx = args.index("--email")

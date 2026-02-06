@@ -26,6 +26,11 @@ Use your Perplexity Pro/Max subscription to access premium models (GPT-5.2, Clau
 pipx install "perplexity-web-mcp[all] @ git+https://github.com/jacob-bd/perplexity-web-mcp.git"
 ```
 
+> **Note:** Requires Python 3.10-3.13. If pipx defaults to Python 3.14+, specify a compatible version:
+> ```bash
+> pipx install --python python3.12 "perplexity-web-mcp[all] @ git+https://github.com/jacob-bd/perplexity-web-mcp.git"
+> ```
+
 This installs `pwm-auth`, `pwm-mcp`, and `pwm-api` as global commands.
 
 ### Option B: pip (Global or in existing venv)
@@ -80,7 +85,12 @@ This will:
 3. Save your session token to `~/.config/perplexity-web-mcp/token`
 4. Display your subscription tier (Free/Pro/Max)
 
-The token is stored globally, so you only need to authenticate once. Both the MCP server and API server will automatically use it.
+The token is stored globally at `~/.config/perplexity-web-mcp/token`, so you only need to authenticate once. Both the MCP server and API server will automatically use it.
+
+To check your current auth status without logging in:
+```bash
+pwm-auth --check
+```
 
 **Note**: Session tokens typically last ~30 days. Re-run `pwm-auth` if you get 403 errors.
 
@@ -322,7 +332,8 @@ Models.KIMI_K25_THINKING         # Kimi K2.5 (thinking only)
 
 | Command | Description |
 |---------|-------------|
-| `pwm-auth` | Authenticate and save session token |
+| `pwm-auth` | Authenticate and save session token (interactive) |
+| `pwm-auth --check` | Check if already authenticated (no login prompt) |
 | `pwm-auth --email EMAIL` | Request verification code (non-interactive) |
 | `pwm-auth --email EMAIL --code CODE` | Complete auth with code (non-interactive) |
 | `pwm-mcp` | Start MCP server |
@@ -352,17 +363,26 @@ pwm-auth --email your@email.com
 pwm-auth --email your@email.com --code 123456
 ```
 
-### AI-Assisted Token Recovery
+### AI-Assisted Re-Authentication
 
-For AI agents with email access (like OpenClaw), the recovery flow is:
+**Via MCP tools** (recommended for AI agents using the MCP server):
 
 1. **Detect 403 error** in response
-2. **Run**: `pwm-auth --email YOUR_PERPLEXITY_EMAIL`
-3. **Check email** for 6-digit verification code from Perplexity
-4. **Run**: `pwm-auth --email YOUR_PERPLEXITY_EMAIL --code XXXXXX`
-5. **Restart** the `pwm-api` server to load the new token
+2. **Call** `pplx_auth_status` to confirm token is expired
+3. **Call** `pplx_auth_request_code(email='YOUR_PERPLEXITY_EMAIL')` to send verification code
+4. **Check email** for 6-digit code from Perplexity
+5. **Call** `pplx_auth_complete(email='YOUR_PERPLEXITY_EMAIL', code='XXXXXX')` to complete auth
 
-The token is automatically saved to `.env` file. Output includes `TOKEN=...` for capture if needed.
+**Via CLI** (for AI agents with shell access, like OpenClaw):
+
+1. **Detect 403 error** in response
+2. **Run**: `pwm-auth --check` to confirm token is expired
+3. **Run**: `pwm-auth --email YOUR_PERPLEXITY_EMAIL` to send verification code
+4. **Check email** for 6-digit verification code from Perplexity
+5. **Run**: `pwm-auth --email YOUR_PERPLEXITY_EMAIL --code XXXXXX` to complete auth
+6. **Restart** the `pwm-api` server if using the API (MCP picks up the new token automatically)
+
+The token is saved to `~/.config/perplexity-web-mcp/token` and used automatically by both MCP and API servers.
 
 ### Rate Limiting
 The API server enforces a 5-second minimum between requests to respect Perplexity's rate limits.
