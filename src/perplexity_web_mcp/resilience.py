@@ -63,13 +63,16 @@ class RateLimiter:
             min_interval = 1.0 / self.requests_per_second
 
             if self._last_request > 0:
-                elapsed = now - self._last_request
-                wait_time = min_interval - elapsed
+                wait_time = min_interval - (now - self._last_request)
+            else:
+                wait_time = 0.0
 
-                if wait_time > 0:
-                    sleep(wait_time)
+            # Reserve our slot by advancing _last_request before releasing lock.
+            # This lets other threads calculate their own wait without blocking.
+            self._last_request = max(now, self._last_request + min_interval)
 
-            self._last_request = monotonic()
+        if wait_time > 0:
+            sleep(wait_time)
 
 
 def get_random_browser_profile() -> str:

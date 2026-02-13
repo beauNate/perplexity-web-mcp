@@ -210,11 +210,11 @@ def fetch_rate_limits(token: str) -> RateLimits | None:
     Returns None on any error (network, auth, parsing).
     """
     try:
-        session = _create_session(token)
-        response = session.get(f"{API_BASE_URL}{ENDPOINT_RATE_LIMITS}")
-        if response.status_code == 200:
-            return RateLimits.from_api(response.json())
-        logger.warning(f"Rate limits fetch failed: HTTP {response.status_code}")
+        with _create_session(token) as session:
+            response = session.get(f"{API_BASE_URL}{ENDPOINT_RATE_LIMITS}")
+            if response.status_code == 200:
+                return RateLimits.from_api(response.json())
+            logger.warning(f"Rate limits fetch failed: HTTP {response.status_code}")
     except Exception as exc:
         logger.warning(f"Rate limits fetch error: {exc}")
     return None
@@ -226,11 +226,11 @@ def fetch_user_settings(token: str) -> UserSettings | None:
     Returns None on any error (network, auth, parsing).
     """
     try:
-        session = _create_session(token)
-        response = session.get(f"{API_BASE_URL}{ENDPOINT_USER_SETTINGS}")
-        if response.status_code == 200:
-            return UserSettings.from_api(response.json())
-        logger.warning(f"User settings fetch failed: HTTP {response.status_code}")
+        with _create_session(token) as session:
+            response = session.get(f"{API_BASE_URL}{ENDPOINT_USER_SETTINGS}")
+            if response.status_code == 200:
+                return UserSettings.from_api(response.json())
+            logger.warning(f"User settings fetch failed: HTTP {response.status_code}")
     except Exception as exc:
         logger.warning(f"User settings fetch error: {exc}")
     return None
@@ -249,6 +249,7 @@ class RateLimitCache:
     """
 
     __slots__ = (
+        "_fetch_lock",
         "_lock",
         "_rate_limits",
         "_rate_limits_ts",
@@ -269,6 +270,7 @@ class RateLimitCache:
         self._rate_limit_ttl = rate_limit_ttl
         self._settings_ttl = settings_ttl
         self._lock = Lock()
+        self._fetch_lock = Lock()  # Prevents thundering herd on cache miss
         self._rate_limits: RateLimits | None = None
         self._rate_limits_ts: float = 0.0
         self._settings: UserSettings | None = None
@@ -285,40 +287,63 @@ class RateLimitCache:
 
     def get_rate_limits(self, force_refresh: bool = False) -> RateLimits | None:
         """Get rate limits, fetching if cache is stale or empty."""
-        now = monotonic()
+        # Fast path: return cached value if still fresh
         with self._lock:
             if (
                 not force_refresh
                 and self._rate_limits is not None
-                and (now - self._rate_limits_ts) < self._rate_limit_ttl
+                and (monotonic() - self._rate_limits_ts) < self._rate_limit_ttl
             ):
                 return self._rate_limits
+            token = self._token  # Capture token under lock
 
-        # Fetch outside lock to avoid blocking other threads
-        limits = fetch_rate_limits(self._token)
-        if limits is not None:
+        # Serialize fetches to prevent thundering herd
+        with self._fetch_lock:
+            # Double-check: another thread may have refreshed while we waited
             with self._lock:
-                self._rate_limits = limits
-                self._rate_limits_ts = monotonic()
-        return limits
+                if (
+                    not force_refresh
+                    and self._rate_limits is not None
+                    and (monotonic() - self._rate_limits_ts) < self._rate_limit_ttl
+                ):
+                    return self._rate_limits
+
+            limits = fetch_rate_limits(token)
+            if limits is not None:
+                with self._lock:
+                    self._rate_limits = limits
+                    self._rate_limits_ts = monotonic()
+            return limits
 
     def get_user_settings(self, force_refresh: bool = False) -> UserSettings | None:
         """Get user settings, fetching if cache is stale or empty."""
-        now = monotonic()
+        # Fast path: return cached value if still fresh
         with self._lock:
             if (
                 not force_refresh
                 and self._settings is not None
-                and (now - self._settings_ts) < self._settings_ttl
+                and (monotonic() - self._settings_ts) < self._settings_ttl
             ):
                 return self._settings
+            token = self._token  # Capture token under lock
 
-        settings = fetch_user_settings(self._token)
-        if settings is not None:
+        # Serialize fetches to prevent thundering herd
+        with self._fetch_lock:
+            # Double-check: another thread may have refreshed while we waited
             with self._lock:
-                self._settings = settings
-                self._settings_ts = monotonic()
-        return settings
+                if (
+                    not force_refresh
+                    and self._settings is not None
+                    and (monotonic() - self._settings_ts) < self._settings_ttl
+                ):
+                    return self._settings
+
+            settings = fetch_user_settings(token)
+            if settings is not None:
+                with self._lock:
+                    self._settings = settings
+                    self._settings_ts = monotonic()
+            return settings
 
     def invalidate_rate_limits(self) -> None:
         """Invalidate rate limit cache (call after making a query)."""

@@ -16,9 +16,12 @@ if TYPE_CHECKING:
 
 
 class ConversationConfig(BaseModel):
-    """Default settings for a conversation."""
+    """Default settings for a conversation.
+    
+    Frozen to prevent accidental mutation after creation.
+    """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     model: Model | None = None
     citation_mode: CitationMode = CitationMode.CLEAN

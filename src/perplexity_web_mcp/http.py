@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
 from time import monotonic
 from typing import TYPE_CHECKING, Any
 
@@ -93,8 +92,10 @@ class HTTPClient:
             new_profile = get_random_browser_profile()
             logger.debug(f"Rotating fingerprint | old={self._impersonate} new={new_profile}")
 
-            with suppress(Exception):
+            try:
                 self._session.close()
+            except Exception as exc:
+                logger.debug(f"Session close error during rotation (suppressed): {exc}")
 
             self._impersonate = new_profile
             self._session = self._create_session(new_profile)
@@ -167,11 +168,11 @@ class HTTPClient:
 
                 response.raise_for_status()
                 return response
+            except (RateLimitError, AuthenticationError):
+                raise  # Already mapped; let tenacity handle retry
             except Exception as error:
-                if isinstance(error, RateLimitError):
-                    raise
                 self._handle_error(error, f"GET {endpoint}: ")
-                raise error
+                raise  # Unreachable (defensive); _handle_error always raises
 
         return _do_get()
 
@@ -200,11 +201,11 @@ class HTTPClient:
 
                 response.raise_for_status()
                 return response
+            except (RateLimitError, AuthenticationError):
+                raise  # Already mapped; let tenacity handle retry
             except Exception as error:
-                if isinstance(error, RateLimitError):
-                    raise error
                 self._handle_error(error, f"POST {endpoint}: ")
-                raise error
+                raise  # Unreachable (defensive); _handle_error always raises
 
         return _do_post()
 
@@ -223,30 +224,37 @@ class HTTPClient:
         
         Uses minimal headers to avoid Cloudflare bot detection.
         The full headers (Accept, Content-Type) are only needed for POST requests.
+        Retries on transient failures (same as get/post).
         """
-        # Use minimal headers for this GET request - full headers trigger Cloudflare
         url = f"{API_BASE_URL}{ENDPOINT_SEARCH_INIT}"
         minimal_headers = {
             "Referer": API_BASE_URL,
             "Origin": API_BASE_URL,
         }
-        
+
         log_request("GET", url, params={"q": query})
-        self._throttle()
-        
-        request_start = monotonic()
-        response = self._session.get(
-            url, 
-            params={"q": query},
-            headers=minimal_headers,  # Override session headers
-        )
-        elapsed_ms = (monotonic() - request_start) * 1000
-        
-        log_response("GET", url, response.status_code, elapsed_ms=elapsed_ms)
-        
-        if response.status_code == 403:
-            raise AuthenticationError()
-        response.raise_for_status()
+
+        retryable_exceptions = (RateLimitError, ConnectionError, TimeoutError)
+
+        @create_retry_decorator(self._retry_config, retryable_exceptions, self._on_retry)
+        def _do_init() -> None:
+            self._throttle()
+            request_start = monotonic()
+            response = self._session.get(
+                url,
+                params={"q": query},
+                headers=minimal_headers,  # Override session headers
+            )
+            elapsed_ms = (monotonic() - request_start) * 1000
+            log_response("GET", url, response.status_code, elapsed_ms=elapsed_ms)
+
+            if response.status_code == 403:
+                raise AuthenticationError()
+            if response.status_code == 429:
+                raise RateLimitError()
+            response.raise_for_status()
+
+        _do_init()
 
     def stream_ask(self, payload: dict[str, Any]) -> Generator[bytes, None, None]:
         """Stream a prompt request to the ask endpoint."""

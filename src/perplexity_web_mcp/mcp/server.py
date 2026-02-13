@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from threading import Lock
+from time import monotonic
 from typing import Literal
 
 from fastmcp import FastMCP
@@ -59,21 +61,34 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
 SourceFocusName = Literal["web", "academic", "social", "finance", "all"]
 ModelName = Literal["auto", "sonar", "deep_research", "gpt52", "claude_sonnet", "claude_opus", "gemini_flash", "gemini_pro", "grok", "kimi"]
 
+_client: Perplexity | None = None
+_client_token: str | None = None
+_client_lock = Lock()
+
+
 def _get_client() -> Perplexity:
-    """Create a fresh Perplexity client for each request.
+    """Get or create a cached Perplexity client.
     
-    We don't cache the client because:
-    1. Token can change after re-authentication
-    2. curl_cffi Sessions can have stale state
-    3. MCP server processes may restart between calls
+    The client is cached and reused across requests. It is automatically
+    recreated when the token changes (e.g. after re-authentication).
     """
+    global _client, _client_token
+
     token = get_token_or_raise()
-    # Use minimal config to avoid session issues
-    config = ClientConfig(
-        rotate_fingerprint=False,  # Don't rotate to avoid state issues
-        requests_per_second=0,     # Disable rate limiting (MCP handles this)
-    )
-    return Perplexity(token, config=config)
+    with _client_lock:
+        if _client is None or _client_token != token:
+            if _client is not None:
+                try:
+                    _client.close()
+                except Exception:
+                    pass
+            config = ClientConfig(
+                rotate_fingerprint=False,  # Don't rotate to avoid state issues
+                requests_per_second=0,     # Disable rate limiting (MCP handles this)
+            )
+            _client = Perplexity(token, config=config)
+            _client_token = token
+        return _client
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +96,7 @@ def _get_client() -> Perplexity:
 # ---------------------------------------------------------------------------
 _limit_cache: RateLimitCache | None = None
 _limit_cache_token: str | None = None
+_limit_cache_lock = Lock()
 
 
 def _get_limit_cache() -> RateLimitCache | None:
@@ -91,11 +107,11 @@ def _get_limit_cache() -> RateLimitCache | None:
     if not token:
         return None
 
-    if _limit_cache is None or _limit_cache_token != token:
-        _limit_cache = RateLimitCache(token)
-        _limit_cache_token = token
-
-    return _limit_cache
+    with _limit_cache_lock:
+        if _limit_cache is None or _limit_cache_token != token:
+            _limit_cache = RateLimitCache(token)
+            _limit_cache_token = token
+        return _limit_cache
 
 
 def _is_research_model(model: Model) -> bool:
@@ -196,26 +212,32 @@ def _ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str
     except Exception as error:
         error_str = str(error)
         error_type = type(error).__name__
+        is_rate_limit = "429" in error_str or "rate limit" in error_str.lower()
+        is_auth_error = "403" in error_str or "forbidden" in error_str.lower()
 
-        # Invalidate cache on error too (state may have changed)
-        cache = _get_limit_cache()
-        if cache:
-            cache.invalidate_rate_limits()
+        # Only invalidate cache for rate-limit errors (state actually changed)
+        if is_rate_limit:
+            cache = _get_limit_cache()
+            if cache:
+                cache.invalidate_rate_limits()
 
-        # Check if token actually exists and is valid
-        from perplexity_web_mcp.cli.auth import get_user_info
-        token = load_token()
-        token_status = "No token found"
-        if token:
-            user_info = get_user_info(token)
-            if user_info:
-                token_status = f"Token valid for {user_info.email}"
+        # Only validate token on auth errors (avoid extra HTTP call on transient errors)
+        token_status = ""
+        if is_auth_error or is_rate_limit:
+            from perplexity_web_mcp.cli.auth import get_user_info
+            token = load_token()
+            if not token:
+                token_status = "No token found"
             else:
-                token_status = "Token exists but invalid"
+                user_info = get_user_info(token)
+                if user_info:
+                    token_status = f"Token valid for {user_info.email}"
+                else:
+                    token_status = "Token exists but invalid"
 
         limit_context = _get_limit_context_for_error()
 
-        if "429" in error_str or "rate limit" in error_str.lower():
+        if is_rate_limit:
             return (
                 f"Error: Rate limit exceeded (429).\n\n"
                 f"Token status: {token_status}\n"
@@ -224,7 +246,7 @@ def _ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str
                 f"Call pplx_usage to check your current limits."
             )
 
-        if "403" in error_str or "forbidden" in error_str.lower():
+        if is_auth_error:
             return (
                 f"Error: Access forbidden (403).\n\n"
                 f"Token status: {token_status}\n"
@@ -412,8 +434,35 @@ def pplx_usage(refresh: bool = False) -> str:
 # Authentication Tools
 # =============================================================================
 
-# Session state for auth flow
+# Session state for auth flow (with 10-minute TTL to avoid stale sessions)
 _auth_session: dict = {}
+_auth_session_ts: float = 0.0
+_AUTH_SESSION_TTL: float = 600.0  # 10 minutes
+
+
+def _get_auth_session(email: str) -> dict | None:
+    """Get stored auth session if it matches the email and is still fresh."""
+    if (
+        _auth_session
+        and _auth_session.get("email") == email
+        and (monotonic() - _auth_session_ts) < _AUTH_SESSION_TTL
+    ):
+        return _auth_session
+    return None
+
+
+def _set_auth_session(session_data: dict) -> None:
+    """Store auth session with timestamp."""
+    global _auth_session, _auth_session_ts
+    _auth_session = session_data
+    _auth_session_ts = monotonic()
+
+
+def _clear_auth_session() -> None:
+    """Clear stored auth session."""
+    global _auth_session, _auth_session_ts
+    _auth_session = {}
+    _auth_session_ts = 0.0
 
 
 @mcp.tool
@@ -483,8 +532,6 @@ def pplx_auth_request_code(email: str) -> str:
     from curl_cffi.requests import Session
     from orjson import loads
     
-    global _auth_session
-    
     BASE_URL = "https://www.perplexity.ai"
     
     try:
@@ -512,8 +559,8 @@ def pplx_auth_request_code(email: str) -> str:
         if response.status_code != 200:
             return f"ERROR: Failed to send verification code. Status: {response.status_code}"
         
-        # Store session for completion
-        _auth_session = {"session": session, "email": email}
+        # Store session for completion (with TTL)
+        _set_auth_session({"session": session, "email": email})
         
         return (
             f"SUCCESS: Verification code sent to {email}\n\n"
@@ -544,17 +591,16 @@ def pplx_auth_complete(email: str, code: str) -> str:
     from orjson import loads
     from perplexity_web_mcp.cli.auth import get_user_info
     
-    global _auth_session
-    
     BASE_URL = "https://www.perplexity.ai"
     SESSION_COOKIE_NAME = "__Secure-next-auth.session-token"
     
     try:
-        # Use existing session or create new one
-        if _auth_session and _auth_session.get("email") == email:
-            session = _auth_session["session"]
+        # Use existing session (with TTL check) or create new one
+        stored = _get_auth_session(email)
+        if stored:
+            session = stored["session"]
         else:
-            # Create fresh session if none exists
+            # Create fresh session if none exists or TTL expired
             session = Session(impersonate="chrome", headers={"Referer": BASE_URL, "Origin": BASE_URL})
             session.get(BASE_URL)
         
@@ -570,7 +616,7 @@ def pplx_auth_complete(email: str, code: str) -> str:
         )
         
         if response.status_code != 200:
-            return f"ERROR: Invalid verification code. Please check and try again."
+            return "ERROR: Invalid verification code. Please check and try again."
         
         redirect_path = loads(response.content).get("redirect")
         if not redirect_path:
@@ -587,7 +633,7 @@ def pplx_auth_complete(email: str, code: str) -> str:
         
         # Save token
         if save_token(token):
-            _auth_session = {}
+            _clear_auth_session()
             
             # Get user info
             user_info = get_user_info(token)

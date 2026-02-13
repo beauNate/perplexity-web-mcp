@@ -88,17 +88,21 @@ class UserInfo:
 
 def get_user_info(token: str) -> UserInfo | None:
     """Fetch user info from Perplexity API."""
+    import logging
+    _logger = logging.getLogger(__name__)
+
     try:
-        session = Session(
+        with Session(
             impersonate="chrome",
             headers={"Referer": BASE_URL, "Origin": BASE_URL},
             cookies={SESSION_COOKIE_NAME: token},
-        )
-        response = session.get(f"{BASE_URL}/api/user")
-        if response.status_code == 200:
-            return UserInfo.from_api(response.json())
-    except Exception:
-        pass
+        ) as session:
+            response = session.get(f"{BASE_URL}/api/user")
+            if response.status_code == 200:
+                return UserInfo.from_api(response.json())
+            _logger.debug(f"get_user_info: HTTP {response.status_code}")
+    except Exception as exc:
+        _logger.debug(f"get_user_info failed: {exc}")
     return None
 
 

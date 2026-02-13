@@ -6,8 +6,12 @@ across all invocations (CLI, MCP server, API server).
 
 from __future__ import annotations
 
+import logging
 from os import environ
 from pathlib import Path
+
+# Use stdlib logging to avoid circular import with .logging module
+_logger = logging.getLogger(__name__)
 
 CONFIG_DIR = Path.home() / ".config" / "perplexity-web-mcp"
 TOKEN_FILE = CONFIG_DIR / "token"
@@ -30,7 +34,8 @@ def save_token(token: str) -> bool:
         # Also update environment so current process uses new token
         environ[ENV_KEY] = token
         return True
-    except Exception:
+    except Exception as exc:
+        _logger.warning(f"Failed to save token to {TOKEN_FILE}: {exc}")
         return False
 
 
@@ -49,8 +54,8 @@ def load_token() -> str | None:
             token = TOKEN_FILE.read_text(encoding="utf-8").strip()
             if token:
                 return token
-    except Exception:
-        pass
+    except Exception as exc:
+        _logger.debug(f"Could not read token file {TOKEN_FILE}: {exc}")
     
     # Fall back to environment variable
     env_token = environ.get(ENV_KEY)

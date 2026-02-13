@@ -1,0 +1,120 @@
+# Changelog
+
+All notable changes to **perplexity-web-mcp** are documented in this file.
+
+---
+
+## [0.3.0] - 2026-02-13
+
+Comprehensive stability, performance, and correctness overhaul. No breaking API changes.
+
+### Fixed
+
+- **Resource leak: CurlMime in file upload** (`core.py`) — `CurlMime()` is now wrapped in `try/finally` so it is always closed, even when S3 upload raises an exception.
+- **Resource leak: unclosed HTTP sessions** (`rate_limits.py`) — `fetch_rate_limits()` and `fetch_user_settings()` now use context managers to close `curl_cffi` sessions after each call.
+- **Resource leak: MCP client never closed** (`mcp/server.py`) — The Perplexity client was created fresh per request but never closed, leaking `curl_cffi` sessions. Replaced with a cached client (see Performance below).
+- **RateLimiter blocked all threads during sleep** (`resilience.py`) — `acquire()` held the lock for the entire sleep duration, serializing all threads. Now reserves the time slot under the lock but sleeps outside it.
+- **RateLimitError never retried despite being listed as retryable** (`http.py`) — `get()` and `post()` intercepted `RateLimitError` before tenacity could handle it. Now correctly propagates through the retry decorator.
+- **Dead code in retry exception handling** (`http.py`) — `_handle_error()` always raises, so the trailing `raise error` after it was unreachable. Removed.
+- **Streaming errors left HTTP connections open** (`core.py`) — Both `_complete()` and `_stream()` now use `try/finally` with `gen.close()` to ensure the underlying HTTP response is cleaned up on error.
+- **`_process_data()` raised ValueError instead of ResponseParsingError** (`core.py`) — Missing/invalid JSON in SSE data now raises `ResponseParsingError` (part of the exception hierarchy) instead of bare `ValueError`.
+- **`_parse_line()` crashed on malformed JSON** (`core.py`) — `JSONDecodeError` and `UnicodeDecodeError` are now caught gracefully; malformed SSE lines return `None` instead of crashing the stream.
+- **Race condition in rate limit cache** (`rate_limits.py`) — Added a dedicated `_fetch_lock` with double-checked locking to prevent thundering herd when multiple threads hit a stale cache simultaneously.
+- **Unprotected global state in MCP server** (`mcp/server.py`) — `_get_limit_cache()` now uses a `Lock` to prevent duplicate cache creation under concurrent requests.
+- **Auth session objects leaked indefinitely** (`mcp/server.py`) — The `_auth_session` global now has a 10-minute TTL. Stale sessions are automatically discarded.
+- **`init_search()` had no retry logic** (`http.py`) — Unlike `get()` and `post()`, this endpoint had no retry decorator. Now retries on transient failures with the same strategy.
+- **Session rotation silently suppressed all exceptions** (`http.py`) — `with suppress(Exception)` replaced with `try/except` that logs the error at debug level.
+- **Silent exception swallowing** (`token_store.py`, `cli/auth.py`) — `save_token()`, `load_token()`, and `get_user_info()` now log failures instead of silently returning `False`/`None`.
+- **`get_user_info()` leaked session** (`cli/auth.py`) — Now uses a context manager for the `curl_cffi` session.
+- **`ConversationConfig` was mutable** (`config.py`) — Now `frozen=True`, consistent with `ClientConfig`, preventing accidental mutation after creation.
+
+### Performance
+
+- **Cached Perplexity client in MCP server** — The client is now created once and reused across requests, with automatic recreation on token change. Eliminates ~50-100ms of `curl_cffi` session setup overhead per MCP tool call.
+- **Smarter error handling in MCP server** — `get_user_info()` is now only called on 403/429 errors (not every error), removing an unnecessary HTTP round-trip on transient failures. Rate limit cache is only invalidated after successful queries or rate-limit errors, not all errors.
+
+### Added
+
+- `tests/test_resilience.py` — 16 tests covering `RateLimiter` behavior, lock-free sleep verification, thread safety, `get_random_browser_profile()`, `RetryConfig` defaults, and `create_retry_decorator` retry/no-retry/callback behavior.
+- `tests/test_token_store.py` — 10 tests covering `save_token`, `load_token` priority and fallback, whitespace handling, empty files, and `get_token_or_raise` error message.
+- `tests/test_core.py` — 47 tests covering `Perplexity` initialization, `_validate_files` edge cases, `_build_payload` structure, `_format_citations` modes, `_parse_line` SSE parsing, `_process_data` state updates and error handling, and `_build_response` output.
+- `pytest-cov` and `pytest-mock` added to test dependency group.
+
+### Changed
+
+- All dependency version constraints now include upper bounds (e.g., `pydantic>=2.12.5,<3.0`) to prevent breakage from major version bumps.
+
+---
+
+## [0.2.0] - 2026-02-13
+
+### Added
+
+- **Rate limit checking** via Perplexity internal REST API (`/rest/rate-limit/all` and `/rest/user/settings`).
+- `pplx_usage` MCP tool — check remaining Pro Search, Deep Research, Labs, and Browser Agent quotas.
+- `RateLimitCache` — thread-safe, time-based cache for rate limit and user settings data (30s TTL for limits, 5min for settings).
+- Pre-flight limit checking before every query in the MCP server.
+- `RateLimits`, `UserSettings`, `ConnectorLimits`, `SourceLimit` data models.
+- `fetch_rate_limits()` and `fetch_user_settings()` low-level fetch functions.
+- Comprehensive test suite for rate limits (`tests/test_rate_limits.py`, 66 tests).
+
+---
+
+## [0.1.0] - 2026-02-03 to 2026-02-05
+
+Initial release. Forked from [perplexity-webui-scraper](https://github.com/henrique-coder/perplexity-webui-scraper) by henrique-coder and rebranded as `perplexity-web-mcp`.
+
+### Core
+
+- `Perplexity` client with session token authentication and browser fingerprint rotation.
+- `Conversation` class with query, follow-up, file upload, and streaming support.
+- `HTTPClient` with retry (tenacity), rate limiting, and error mapping.
+- Custom exception hierarchy: `PerplexityError`, `HTTPError`, `AuthenticationError`, `RateLimitError`, `FileUploadError`, `FileValidationError`, `ResponseParsingError`, `StreamingError`, `ResearchClarifyingQuestionsError`.
+- Citation formatting modes: `DEFAULT`, `CLEAN` (remove), `MARKDOWN` (convert to links).
+- Search focus (`WEB`, `WRITING`) and source focus (`WEB`, `ACADEMIC`, `SOCIAL`, `FINANCE`).
+- Time range filtering (`ALL`, `DAY`, `WEEK`, `MONTH`, `YEAR`).
+- Configurable logging with `loguru`.
+
+### Models
+
+- `Models.BEST` — auto-select best model.
+- `Models.DEEP_RESEARCH` — in-depth reports.
+- `Models.SONAR` — Perplexity's model.
+- `Models.GPT_52` / `Models.GPT_52_THINKING` — OpenAI.
+- `Models.CLAUDE_45_SONNET` / `Models.CLAUDE_45_SONNET_THINKING` — Anthropic.
+- `Models.CLAUDE_46_OPUS` / `Models.CLAUDE_46_OPUS_THINKING` — Anthropic.
+- `Models.GEMINI_3_FLASH` / `Models.GEMINI_3_FLASH_THINKING` — Google.
+- `Models.GEMINI_3_PRO_THINKING` — Google.
+- `Models.GROK_41` / `Models.GROK_41_THINKING` — xAI.
+- `Models.KIMI_K25_THINKING` — Moonshot AI.
+
+### MCP Server
+
+- `pplx_query` — flexible model selection with thinking toggle.
+- `pplx_ask` — auto-select best model.
+- `pplx_deep_research` — deep research reports.
+- `pplx_sonar`, `pplx_gpt52`, `pplx_gpt52_thinking`, `pplx_claude_sonnet`, `pplx_claude_sonnet_think`, `pplx_gemini_flash`, `pplx_gemini_flash_think`, `pplx_gemini_pro_think`, `pplx_grok`, `pplx_grok_thinking`, `pplx_kimi_thinking` — model-specific tools.
+- `pplx_auth_status`, `pplx_auth_request_code`, `pplx_auth_complete` — in-band authentication for AI agents.
+- All query tools support `source_focus` parameter (`web`, `academic`, `social`, `finance`, `all`).
+
+### Anthropic API Compatibility
+
+- Drop-in `/v1/messages` endpoint compatible with Anthropic SDK.
+- Model mapping from Anthropic model names to Perplexity models.
+- Streaming support via SSE.
+
+### CLI
+
+- `pwm-auth` — interactive and non-interactive authentication.
+- `--check` flag to verify token validity.
+- `--help` flag.
+- Token stored in `~/.config/perplexity-web-mcp/token` with `0600` permissions.
+- Environment variable fallback (`PERPLEXITY_SESSION_TOKEN`).
+
+### Documentation
+
+- Comprehensive README with installation options (pipx, pip, git clone).
+- MCP config examples for Claude Code CLI, Claude Desktop, and Cursor.
+- Project logo.
+- Tool calling research and v1 requirements.
+- Model Council implementation plan.

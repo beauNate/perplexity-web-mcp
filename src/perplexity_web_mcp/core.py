@@ -311,21 +311,21 @@ class Conversation:
                 file_content = f.read()
 
             mime = CurlMime()
+            try:
+                for field_name, field_value in fields.items():
+                    mime.addpart(name=field_name, data=field_value)
 
-            for field_name, field_value in fields.items():
-                mime.addpart(name=field_name, data=field_value)
+                mime.addpart(
+                    name="file",
+                    content_type=file_info.mimetype,
+                    filename=file_path.name,
+                    data=file_content,
+                )
 
-            mime.addpart(
-                name="file",
-                content_type=file_info.mimetype,
-                filename=file_path.name,
-                data=file_content,
-            )
-
-            with Session() as s3_session:
-                upload_response = s3_session.post(s3_bucket_url, multipart=mime)
-
-            mime.close()
+                with Session() as s3_session:
+                    upload_response = s3_session.post(s3_bucket_url, multipart=mime)
+            finally:
+                mime.close()
 
             if upload_response.status_code not in (200, 201, 204):
                 raise FileUploadError(
@@ -408,10 +408,14 @@ class Conversation:
         return CITATION_PATTERN.sub(replacer, text)
 
     def _parse_line(self, line: str | bytes) -> dict[str, Any] | None:
-        if isinstance(line, bytes) and line.startswith(b"data: "):
-            return loads(line[6:])
-        if isinstance(line, str) and line.startswith("data: "):
-            return loads(line[6:])
+        try:
+            if isinstance(line, bytes) and line.startswith(b"data: "):
+                return loads(line[6:])
+            if isinstance(line, str) and line.startswith("data: "):
+                return loads(line[6:])
+        except (JSONDecodeError, UnicodeDecodeError) as error:
+            logger.debug(f"Skipping malformed SSE line: {error}")
+            return None
 
         return None
 
@@ -433,9 +437,9 @@ class Conversation:
         try:
             json_data = loads(data["text"])
         except KeyError as error:
-            raise ValueError("Missing 'text' field in data") from error
+            raise ResponseParsingError("Missing 'text' field in data", raw_data=str(data)) from error
         except JSONDecodeError as error:
-            raise ValueError("Invalid JSON in 'text' field") from error
+            raise ResponseParsingError("Invalid JSON in 'text' field", raw_data=str(data.get("text", ""))[:500]) from error
 
         answer_data: dict[str, Any] = {}
 
@@ -537,18 +541,26 @@ class Conversation:
         )
 
     def _complete(self, payload: dict[str, Any]) -> None:
-        for line in self._http.stream_ask(payload):
-            data = self._parse_line(line)
-            if data:
-                self._process_data(data)
-                if data.get("final"):
-                    break
+        gen = self._http.stream_ask(payload)
+        try:
+            for line in gen:
+                data = self._parse_line(line)
+                if data:
+                    self._process_data(data)
+                    if data.get("final"):
+                        break
+        finally:
+            gen.close()
 
     def _stream(self, payload: dict[str, Any]) -> Generator[Response, None, None]:
-        for line in self._http.stream_ask(payload):
-            data = self._parse_line(line)
-            if data:
-                self._process_data(data)
-                yield self._build_response()
-                if data.get("final"):
-                    break
+        gen = self._http.stream_ask(payload)
+        try:
+            for line in gen:
+                data = self._parse_line(line)
+                if data:
+                    self._process_data(data)
+                    yield self._build_response()
+                    if data.get("final"):
+                        break
+        finally:
+            gen.close()
