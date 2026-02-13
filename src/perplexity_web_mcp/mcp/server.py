@@ -10,6 +10,7 @@ from perplexity_web_mcp.config import ClientConfig, ConversationConfig
 from perplexity_web_mcp.core import Perplexity
 from perplexity_web_mcp.enums import CitationMode, SearchFocus, SourceFocus
 from perplexity_web_mcp.models import Model, Models
+from perplexity_web_mcp.rate_limits import RateLimitCache, RateLimits
 from perplexity_web_mcp.token_store import get_token_or_raise, load_token, save_token
 
 
@@ -21,6 +22,9 @@ mcp = FastMCP(
         "Or use model-specific tools like pplx_gpt52, pplx_claude_sonnet, etc. "
         "All tools support source_focus: web, academic, social, finance, all. "
         "\n\n"
+        "USAGE LIMITS: Call pplx_usage before heavy use to check remaining quotas. "
+        "The server checks limits automatically and will warn you before queries "
+        "that would exceed your plan's allowance.\n\n"
         "AUTHENTICATION: If you get a 403 error or 'token expired' message, use these tools to re-authenticate:\n"
         "1. pplx_auth_status - Check current authentication status\n"
         "2. pplx_auth_request_code - Send verification code to email (requires email address)\n"
@@ -72,8 +76,89 @@ def _get_client() -> Perplexity:
     return Perplexity(token, config=config)
 
 
+# ---------------------------------------------------------------------------
+# Rate limit cache (persistent across requests, refreshes on token change)
+# ---------------------------------------------------------------------------
+_limit_cache: RateLimitCache | None = None
+_limit_cache_token: str | None = None
+
+
+def _get_limit_cache() -> RateLimitCache | None:
+    """Get or create the rate limit cache for the current token."""
+    global _limit_cache, _limit_cache_token
+
+    token = load_token()
+    if not token:
+        return None
+
+    if _limit_cache is None or _limit_cache_token != token:
+        _limit_cache = RateLimitCache(token)
+        _limit_cache_token = token
+
+    return _limit_cache
+
+
+def _is_research_model(model: Model) -> bool:
+    """Check if the model is Deep Research (uses research quota)."""
+    return model is Models.DEEP_RESEARCH
+
+
+def _check_limits_before_query(model: Model) -> str | None:
+    """Check rate limits before executing a query.
+    
+    Returns an error message string if limits are exceeded, None if OK.
+    Does not block the query on cache miss / fetch failure (fail-open).
+    """
+    cache = _get_limit_cache()
+    if cache is None:
+        return None  # No token, will fail at auth stage
+
+    limits = cache.get_rate_limits()
+    if limits is None:
+        return None  # Fetch failed, fail-open
+
+    if _is_research_model(model):
+        if not limits.has_research_queries:
+            return (
+                f"LIMIT REACHED: Deep Research queries exhausted "
+                f"(0 remaining).\n\n"
+                f"Current usage:\n{limits.format_summary()}\n\n"
+                f"Deep Research limits reset monthly. "
+                f"Use pplx_ask or another model for standard Pro Search instead."
+            )
+    else:
+        if not limits.has_pro_queries:
+            return (
+                f"LIMIT REACHED: Pro Search queries exhausted "
+                f"(0 remaining).\n\n"
+                f"Current usage:\n{limits.format_summary()}\n\n"
+                f"Pro Search limits reset weekly. "
+                f"Consider waiting or upgrading your plan."
+            )
+
+    return None
+
+
+def _get_limit_context_for_error() -> str:
+    """Get rate limit context to include in error messages."""
+    cache = _get_limit_cache()
+    if cache is None:
+        return ""
+
+    limits = cache.get_rate_limits()
+    if limits is None:
+        return ""
+
+    return f"\nCurrent usage:\n{limits.format_summary()}\n"
+
+
 def _ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
     """Execute a query with a specific model."""
+
+    # Pre-flight limit check
+    limit_error = _check_limits_before_query(model)
+    if limit_error:
+        return limit_error
 
     client = _get_client()
     sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
@@ -89,6 +174,12 @@ def _ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str
         )
 
         conversation.ask(query)
+
+        # Invalidate rate limit cache after successful query
+        cache = _get_limit_cache()
+        if cache:
+            cache.invalidate_rate_limits()
+
         answer = conversation.answer or "No answer received"
 
         response_parts = [answer]
@@ -105,7 +196,12 @@ def _ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str
     except Exception as error:
         error_str = str(error)
         error_type = type(error).__name__
-        
+
+        # Invalidate cache on error too (state may have changed)
+        cache = _get_limit_cache()
+        if cache:
+            cache.invalidate_rate_limits()
+
         # Check if token actually exists and is valid
         from perplexity_web_mcp.cli.auth import get_user_info
         token = load_token()
@@ -116,13 +212,25 @@ def _ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str
                 token_status = f"Token valid for {user_info.email}"
             else:
                 token_status = "Token exists but invalid"
-        
+
+        limit_context = _get_limit_context_for_error()
+
+        if "429" in error_str or "rate limit" in error_str.lower():
+            return (
+                f"Error: Rate limit exceeded (429).\n\n"
+                f"Token status: {token_status}\n"
+                f"{limit_context}\n"
+                f"Wait a few minutes before retrying. "
+                f"Call pplx_usage to check your current limits."
+            )
+
         if "403" in error_str or "forbidden" in error_str.lower():
             return (
                 f"Error: Access forbidden (403).\n\n"
                 f"Token status: {token_status}\n"
                 f"Error type: {error_type}\n"
-                f"Error details: {error_str}\n\n"
+                f"Error details: {error_str}\n"
+                f"{limit_context}\n"
                 f"This may be a Perplexity API issue. If token shows as valid above, "
                 f"try waiting a few seconds and retry. If persistent, re-authenticate:\n"
                 f"1. Call pplx_auth_request_code(email='YOUR_EMAIL')\n"
@@ -250,6 +358,57 @@ def pplx_kimi_thinking(query: str, source_focus: SourceFocusName = "web") -> str
 
 
 # =============================================================================
+# Usage & Limits Tools
+# =============================================================================
+
+
+@mcp.tool
+def pplx_usage(refresh: bool = False) -> str:
+    """Check current Perplexity usage limits and remaining quotas.
+
+    Shows remaining Pro Search, Deep Research, Create Files & Apps, and Browser
+    Agent queries. Also shows subscription info and file/upload limits.
+    
+    Call this before heavy use to plan queries, or after getting rate limit
+    errors to understand what's left.
+
+    Args:
+        refresh: Force refresh from Perplexity (ignores cache). Default False.
+    """
+    token = load_token()
+    if not token:
+        return (
+            "NOT AUTHENTICATED\n\n"
+            "No session token found. Authenticate first with pplx_auth_request_code."
+        )
+
+    cache = _get_limit_cache()
+    if cache is None:
+        return "ERROR: Could not initialize limit cache."
+
+    parts: list[str] = []
+
+    # Rate limits (the main value)
+    limits = cache.get_rate_limits(force_refresh=refresh)
+    if limits:
+        parts.append("RATE LIMITS (remaining queries)")
+        parts.append("=" * 40)
+        parts.append(limits.format_summary())
+    else:
+        parts.append("WARNING: Could not fetch rate limits (network error or token issue).")
+
+    # User settings (supplementary context)
+    settings = cache.get_user_settings(force_refresh=refresh)
+    if settings:
+        parts.append("")
+        parts.append("ACCOUNT INFO")
+        parts.append("=" * 40)
+        parts.append(settings.format_summary())
+
+    return "\n".join(parts)
+
+
+# =============================================================================
 # Authentication Tools
 # =============================================================================
 
@@ -279,12 +438,24 @@ def pplx_auth_status() -> str:
     # Verify token is valid
     user_info = get_user_info(token)
     if user_info:
-        return (
-            f"AUTHENTICATED\n\n"
-            f"Email: {user_info.email}\n"
-            f"Username: {user_info.username}\n"
-            f"Subscription: {user_info.tier_display}"
-        )
+        parts = [
+            f"AUTHENTICATED\n",
+            f"Email: {user_info.email}",
+            f"Username: {user_info.username}",
+            f"Subscription: {user_info.tier_display}",
+        ]
+
+        # Include rate limit snapshot
+        cache = _get_limit_cache()
+        if cache:
+            limits = cache.get_rate_limits()
+            if limits:
+                parts.append(f"\nRemaining: {limits.remaining_pro} Pro | "
+                             f"{limits.remaining_research} Research | "
+                             f"{limits.remaining_labs} Labs | "
+                             f"{limits.remaining_agentic_research} Agent")
+
+        return "\n".join(parts)
     else:
         return (
             "TOKEN EXPIRED\n\n"

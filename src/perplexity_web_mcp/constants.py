@@ -21,6 +21,12 @@ ENDPOINT_SEARCH_INIT: Final[str] = "/search/new"
 ENDPOINT_UPLOAD: Final[str] = "/rest/uploads/batch_create_upload_urls"
 """Endpoint for file upload URL generation."""
 
+ENDPOINT_RATE_LIMITS: Final[str] = "/rest/rate-limit/all"
+"""Endpoint to fetch current rate limit status and remaining quotas."""
+
+ENDPOINT_USER_SETTINGS: Final[str] = "/rest/user/settings"
+"""Endpoint to fetch user settings, subscription info, and connector limits."""
+
 SEND_BACK_TEXT: Final[bool] = True
 """Whether to receive full text in each streaming chunk (replace mode)."""
 

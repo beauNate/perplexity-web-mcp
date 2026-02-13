@@ -179,11 +179,17 @@ The token is loaded automatically from `~/.config/perplexity-web-mcp/token` (cre
 | `pplx_grok_thinking` | Grok 4.1 with extended thinking |
 | `pplx_kimi_thinking` | Kimi K2.5 (thinking always on) |
 
+**Usage & Limits Tools**:
+
+| Tool | Description |
+|------|-------------|
+| `pplx_usage` | Check remaining quotas (Pro Search, Deep Research, Labs, Agent) |
+
 **Authentication Tools** (for AI-assisted re-authentication):
 
 | Tool | Description |
 |------|-------------|
-| `pplx_auth_status` | Check if authenticated and show subscription tier |
+| `pplx_auth_status` | Check if authenticated, show subscription tier and remaining quotas |
 | `pplx_auth_request_code` | Send verification code to email |
 | `pplx_auth_complete` | Complete auth with email and 6-digit code |
 
@@ -318,13 +324,15 @@ Models.KIMI_K25_THINKING         # Kimi K2.5 (thinking only)
 
 ---
 
-## Subscription Tiers
+## Subscription Tiers & Rate Limits
 
-| Tier | Cost | Access |
-|------|------|--------|
-| Free | $0 | All models (limited queries) |
-| Pro | $20/mo | Extended quotas |
-| Max | $200/mo | Unlimited + Claude 4.6 Opus |
+| Tier | Cost | Pro Search | Deep Research | Labs | 
+|------|------|------------|---------------|------|
+| Free | $0 | 3/day | 1/month | No |
+| Pro | $20/mo | Weekly (average use) | Monthly (average use) | Monthly (average use) |
+| Max | $200/mo | Weekly (advanced use) | Monthly (advanced use) | Monthly (advanced use) |
+
+The MCP server checks your remaining quotas before each query using Perplexity's internal rate limit API. Use the `pplx_usage` tool to check your current limits at any time.
 
 ---
 
@@ -385,7 +393,8 @@ pwm-auth --email your@email.com --code 123456
 The token is saved to `~/.config/perplexity-web-mcp/token` and used automatically by both MCP and API servers.
 
 ### Rate Limiting
-The API server enforces a 5-second minimum between requests to respect Perplexity's rate limits.
+- **MCP server**: Automatically checks remaining quotas before each query and blocks requests that would exceed your plan's limits. Use `pplx_usage` to see your current quotas.
+- **API server**: Enforces a 5-second minimum between requests to respect Perplexity's rate limits.
 
 ### Claude Code Hangs
 If Claude Code hangs with "zero tokens sent", restart the `pwm-api` server.

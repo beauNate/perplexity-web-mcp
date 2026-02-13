@@ -17,6 +17,7 @@ from .exceptions import (
     StreamingError,
 )
 from .models import Model, Models
+from .rate_limits import RateLimitCache, RateLimits, SourceLimit, UserSettings, fetch_rate_limits, fetch_user_settings
 from .types import Coordinates, Response, SearchResultItem
 
 
@@ -39,6 +40,8 @@ __all__: list[str] = [
     "Models",
     "Perplexity",
     "PerplexityError",
+    "RateLimitCache",
+    "RateLimits",
     "RateLimitError",
     "ResearchClarifyingQuestionsError",
     "Response",
@@ -46,6 +49,10 @@ __all__: list[str] = [
     "SearchFocus",
     "SearchResultItem",
     "SourceFocus",
+    "SourceLimit",
     "StreamingError",
     "TimeRange",
+    "UserSettings",
+    "fetch_rate_limits",
+    "fetch_user_settings",
 ]

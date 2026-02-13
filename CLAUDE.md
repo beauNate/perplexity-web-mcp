@@ -25,6 +25,7 @@ src/perplexity_web_mcp/
 ├── config.py            # ClientConfig, ConversationConfig
 ├── enums.py             # CitationMode, SearchFocus, SourceFocus
 ├── http.py              # HTTP client with retry/rate limiting
+├── rate_limits.py       # Rate limit checking via /rest/rate-limit/all & /rest/user/settings
 ├── cli/
 │   └── auth.py          # Authentication CLI (pwm-auth)
 ├── mcp/
@@ -34,6 +35,24 @@ src/perplexity_web_mcp/
 ```
 
 ## Key APIs
+
+### Rate Limit Checking
+```python
+from perplexity_web_mcp.rate_limits import fetch_rate_limits, fetch_user_settings, RateLimitCache
+
+# One-shot fetch
+limits = fetch_rate_limits(token)
+print(f"Pro: {limits.remaining_pro}, Research: {limits.remaining_research}")
+
+# Cached (thread-safe, 30s TTL for limits, 5min for settings)
+cache = RateLimitCache(token)
+limits = cache.get_rate_limits()  # Fetches or returns cached
+settings = cache.get_user_settings()
+cache.invalidate_rate_limits()    # Force refresh on next call
+```
+
+MCP server uses pre-flight limit checking before every query.
+The `pplx_usage` tool exposes limits to calling LLMs.
 
 ### Subscription Detection
 ```python
@@ -50,9 +69,11 @@ if user.subscription_tier == SubscriptionTier.PRO:
 - `Models.SONAR` - Perplexity's model
 - `Models.GPT_52` / `Models.GPT_52_THINKING`
 - `Models.CLAUDE_45_SONNET` / `Models.CLAUDE_45_SONNET_THINKING`
-- `Models.CLAUDE_45_OPUS` / `Models.CLAUDE_45_OPUS_THINKING`
+- `Models.CLAUDE_46_OPUS` / `Models.CLAUDE_46_OPUS_THINKING`
 - `Models.GEMINI_3_FLASH` / `Models.GEMINI_3_FLASH_THINKING`
+- `Models.GEMINI_3_PRO_THINKING`
 - `Models.GROK_41` / `Models.GROK_41_THINKING`
+- `Models.KIMI_K25_THINKING`
 
 ## Environment Variables
 
@@ -64,8 +85,11 @@ if user.subscription_tier == SubscriptionTier.PRO:
 # Install with dev dependencies
 uv pip install -e ".[mcp,api]"
 
-# Run tests
-pytest
+# Run tests (includes unit + integration tests for rate limits)
+uv run --group tests --extra mcp pytest tests/ -v
+
+# Run just unit tests (no network calls)
+uv run --group tests --extra mcp pytest tests/ -v -k "not Integration"
 ```
 
 ## Credits
