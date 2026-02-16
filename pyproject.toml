@@ -1,6 +1,6 @@
 [project]
 name = "perplexity-web-mcp"
-version = "0.3.0"
+version = "0.4.0"
 description = "MCP server and Anthropic API-compatible interface for Perplexity AI web interface."
 authors = [{ name = "Jacob Ben David" }]
 license = "MIT"
@@ -114,7 +114,7 @@ docstring-code-format = true
 skip-magic-trailing-comma = false
 
 [project.scripts]
-pwm-auth = "perplexity_web_mcp.cli.auth:main"
+pwm = "perplexity_web_mcp.cli.main:main"
 pwm-mcp = "perplexity_web_mcp.mcp:run_server"
 pwm-api = "perplexity_web_mcp.api:run_server"
 

@@ -1,0 +1,192 @@
+"""Tests for the unified CLI (cli/main.py).
+
+Tests command routing, argument parsing, help/version output.
+All query tests mock the shared.ask function to avoid network calls.
+"""
+
+from __future__ import annotations
+
+import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from perplexity_web_mcp.cli.main import _cmd_ask, _cmd_research, _cmd_usage, main
+
+
+# ============================================================================
+# 1. Command routing (main)
+# ============================================================================
+
+
+class TestMainRouting:
+    """Test that main() routes to the correct subcommands."""
+
+    def test_no_args_prints_help(self, capsys: pytest.CaptureFixture) -> None:
+        with patch.object(sys, "argv", ["pwm"]):
+            with pytest.raises(SystemExit) as exc:
+                main()
+            assert exc.value.code == 0
+        out = capsys.readouterr().out
+        assert "pwm - Perplexity Web MCP CLI" in out
+
+    def test_help_flag(self, capsys: pytest.CaptureFixture) -> None:
+        with patch.object(sys, "argv", ["pwm", "--help"]):
+            with pytest.raises(SystemExit) as exc:
+                main()
+            assert exc.value.code == 0
+        assert "Usage:" in capsys.readouterr().out
+
+    def test_version_flag(self, capsys: pytest.CaptureFixture) -> None:
+        with patch.object(sys, "argv", ["pwm", "--version"]):
+            with pytest.raises(SystemExit) as exc:
+                main()
+            assert exc.value.code == 0
+        assert "perplexity-web-mcp" in capsys.readouterr().out
+
+    def test_ai_flag(self, capsys: pytest.CaptureFixture) -> None:
+        with patch.object(sys, "argv", ["pwm", "--ai"]):
+            with pytest.raises(SystemExit) as exc:
+                main()
+            assert exc.value.code == 0
+        out = capsys.readouterr().out
+        assert "PERPLEXITY WEB MCP" in out
+        assert "CLI COMMANDS" in out
+
+    def test_unknown_command_exits_1(self, capsys: pytest.CaptureFixture) -> None:
+        with patch.object(sys, "argv", ["pwm", "bogus"]):
+            with pytest.raises(SystemExit) as exc:
+                main()
+            assert exc.value.code == 1
+        assert "Unknown command" in capsys.readouterr().err
+
+
+# ============================================================================
+# 2. pwm ask - argument parsing
+# ============================================================================
+
+
+class TestCmdAsk:
+    """Test _cmd_ask argument parsing and output."""
+
+    @patch("perplexity_web_mcp.cli.main.ask", return_value="The answer")
+    def test_basic_ask(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask(["What is AI?"])
+        assert code == 0
+        assert "The answer" in capsys.readouterr().out
+        mock_ask.assert_called_once()
+
+    def test_no_query_returns_1(self, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask([])
+        assert code == 1
+        assert "requires a query" in capsys.readouterr().err
+
+    def test_flag_as_first_arg_returns_1(self, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask(["--model", "gpt52"])
+        assert code == 1
+        assert "requires a query" in capsys.readouterr().err
+
+    def test_unknown_model_returns_1(self, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask(["query", "--model", "nonexistent"])
+        assert code == 1
+        assert "Unknown model" in capsys.readouterr().err
+
+    def test_unknown_source_returns_1(self, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask(["query", "--source", "badvalue"])
+        assert code == 1
+        assert "Unknown source" in capsys.readouterr().err
+
+    def test_unknown_option_returns_1(self, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask(["query", "--badopt"])
+        assert code == 1
+        assert "Unknown option" in capsys.readouterr().err
+
+    @patch("perplexity_web_mcp.cli.main.ask", return_value="Answer\n\nCitations:\n[1]: https://x.com")
+    def test_no_citations_flag(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_ask(["query", "--no-citations"])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "Answer" in out
+        assert "Citations" not in out
+
+    @patch("perplexity_web_mcp.cli.main.ask", return_value="Answer\n\nCitations:\n[1]: https://x.com")
+    def test_json_flag(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
+        import orjson
+
+        code = _cmd_ask(["query", "--json"])
+        assert code == 0
+        raw = capsys.readouterr().out
+        data = orjson.loads(raw)
+        assert data["answer"] == "Answer"
+        assert data["citations"] == ["https://x.com"]
+
+    @patch("perplexity_web_mcp.cli.main.ask", return_value="response")
+    @patch("perplexity_web_mcp.cli.main.resolve_model")
+    def test_model_and_thinking_flags(
+        self, mock_resolve: MagicMock, mock_ask: MagicMock
+    ) -> None:
+        mock_resolve.return_value = MagicMock()
+        _cmd_ask(["query", "-m", "gpt52", "-t"])
+        mock_resolve.assert_called_once_with("gpt52", thinking=True)
+
+    @patch("perplexity_web_mcp.cli.main.ask", return_value="response")
+    def test_source_flag(self, mock_ask: MagicMock) -> None:
+        _cmd_ask(["query", "-s", "academic"])
+        call_args = mock_ask.call_args
+        assert call_args[0][2] == "academic"
+
+
+# ============================================================================
+# 3. pwm research - argument parsing
+# ============================================================================
+
+
+class TestCmdResearch:
+    """Test _cmd_research argument parsing."""
+
+    @patch("perplexity_web_mcp.cli.main.ask", return_value="Research report")
+    def test_basic_research(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_research(["AI trends"])
+        assert code == 0
+        assert "Research report" in capsys.readouterr().out
+        # Should use DEEP_RESEARCH model
+        from perplexity_web_mcp.models import Models
+        assert mock_ask.call_args[0][1] is Models.DEEP_RESEARCH
+
+    def test_no_query_returns_1(self, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_research([])
+        assert code == 1
+        assert "requires a query" in capsys.readouterr().err
+
+
+# ============================================================================
+# 4. pwm usage
+# ============================================================================
+
+
+class TestCmdUsage:
+    """Test _cmd_usage output."""
+
+    @patch("perplexity_web_mcp.cli.main.load_token", return_value=None)
+    def test_no_token_returns_1(self, mock_token: MagicMock, capsys: pytest.CaptureFixture) -> None:
+        code = _cmd_usage([])
+        assert code == 1
+        assert "NOT AUTHENTICATED" in capsys.readouterr().out
+
+    @patch("perplexity_web_mcp.cli.main.get_limit_cache")
+    @patch("perplexity_web_mcp.cli.main.load_token", return_value="valid-token")
+    def test_with_limits(
+        self, mock_token: MagicMock, mock_cache_fn: MagicMock, capsys: pytest.CaptureFixture
+    ) -> None:
+        from perplexity_web_mcp.rate_limits import RateLimits
+
+        mock_cache = MagicMock()
+        mock_cache.get_rate_limits.return_value = RateLimits(remaining_pro=100, remaining_research=5)
+        mock_cache.get_user_settings.return_value = None
+        mock_cache_fn.return_value = mock_cache
+
+        code = _cmd_usage([])
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "RATE LIMITS" in out
+        assert "100 remaining" in out
