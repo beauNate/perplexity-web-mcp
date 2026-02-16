@@ -4,6 +4,15 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.5.2] - 2026-02-16
+
+### Changed
+
+- All dependencies are now included by default. No more `[all]`, `[mcp]`, or `[api]` extras needed. Install with just `pip install perplexity-web-mcp-cli`.
+- `fastmcp`, `fastapi`, `uvicorn`, and `httpx` moved from optional extras into base dependencies.
+
+---
+
 ## [0.5.1] - 2026-02-16
 
 ### Changed
