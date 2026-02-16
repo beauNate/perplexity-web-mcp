@@ -4,6 +4,66 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.5.1] - 2026-02-16
+
+### Changed
+
+- Expanded `pwm --ai` documentation with detailed model selection, source focus, and combined flag examples.
+- Expanded Agent Skill (SKILL.md) with separated CLI examples, source focus table with use cases, and real-world common patterns.
+- README, `--ai` doc, and skill now have consistent examples across all three surfaces.
+
+---
+
+## [0.5.0] - 2026-02-16
+
+### Changed
+
+- **Package renamed** from `perplexity-web-mcp` to `perplexity-web-mcp-cli` on PyPI. Install with: `pip install perplexity-web-mcp-cli[all]`. Python import (`perplexity_web_mcp`), CLI commands (`pwm`), and config paths are unchanged.
+
+---
+
+## [0.4.1] - 2026-02-16
+
+### Removed
+
+- Internal planning documents (`.planning/`, `plan/`, `docs/TOOL_CALLING_CHALLENGES.md`) removed from public repo.
+
+### Fixed
+
+- PyPI project URLs corrected from `jbendavi` to `jacob-bd`.
+
+---
+
+## [0.4.0] - 2026-02-16
+
+### Added
+
+- **Unified `pwm` CLI** replacing `pwm-auth` (removed). All commands under one entry point.
+- `pwm ask` — query any Perplexity model from the terminal with model selection (`-m`), thinking (`-t`), source focus (`-s`), JSON output, and citation control.
+- `pwm research` — deep research from the terminal.
+- `pwm login` — authentication (interactive + non-interactive), replaces `pwm-auth`.
+- `pwm usage` — check remaining rate limits and quotas.
+- `pwm setup` — configure MCP server for AI tools (Claude Code, Claude Desktop, Cursor, Windsurf, Gemini CLI). Supports `add`, `remove`, `list`.
+- `pwm skill` — install/uninstall/update Agent Skill across platforms (Claude Code, Cursor, Gemini CLI, Codex, Antigravity). Supports user and project level.
+- `pwm doctor` — diagnose installation, authentication, rate limits, MCP configuration, skill installation, and token security.
+- `pwm --ai` — comprehensive AI-optimized reference document for LLM agents.
+- `shared.py` — single source of truth for model mappings, source focus, client management, rate limits, and the `ask()` function. Both MCP server and CLI import from here (no duplication).
+- Agent Skill following the open standard (SKILL.md + references/). Portable across Claude, Cursor, Gemini, Codex, Antigravity.
+- Skill data bundled inside the package at `data/` for pip/pipx installs.
+- GitHub Actions workflow rewritten for tag-based Trusted Publishing (OIDC, no API token).
+- 81 new tests (209 total).
+
+### Removed
+
+- `pwm-auth` CLI entry point (replaced by `pwm login`).
+
+### Changed
+
+- MCP server (`mcp/server.py`) refactored to import from `shared.py` instead of defining its own model maps and query logic.
+- README rewritten with PyPI install commands (uv, pipx, pip), full CLI reference, and updated examples.
+
+---
+
 ## [0.3.0] - 2026-02-13
 
 Comprehensive stability, performance, and correctness overhaul. No breaking API changes.
