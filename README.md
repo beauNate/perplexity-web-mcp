@@ -4,113 +4,210 @@
 
 # Perplexity Web MCP
 
-MCP server and Anthropic/OpenAI API-compatible interface for Perplexity AI's web interface.
+MCP server, CLI, and API-compatible interface for Perplexity AI's web interface.
 
-Use your Perplexity Pro/Max subscription to access premium models (GPT-5.2, Claude 4.6 Opus, Claude 4.5 Sonnet, Gemini 3, Grok 4.1, etc.) through MCP tools or as an API endpoint for Claude Code.
+Use your Perplexity Pro/Max subscription to access premium models (GPT-5.2, Claude 4.6 Opus, Claude 4.5 Sonnet, Gemini 3, Grok 4.1, Kimi K2.5) from the terminal, through MCP tools, or as an API endpoint.
 
 ## Features
 
-- **MCP Server**: Use Perplexity models as MCP tools with citations
-- **Anthropic API**: Drop-in replacement for Anthropic's Messages API (works with Claude Code)
-- **OpenAI API**: Compatible with OpenAI Chat Completions API
-- **Multiple Models**: GPT-5.2, Claude 4.6 Opus, Claude 4.5 Sonnet, Gemini 3, Grok 4.1, Kimi K2.5
+- **CLI**: Query Perplexity models directly from the terminal (`pwm ask`, `pwm research`)
+- **MCP Server**: 17 MCP tools for AI agents with citations and rate limit checking
+- **API Server**: Drop-in Anthropic Messages API and OpenAI Chat Completions API
+- **10 Models**: GPT-5.2, Claude 4.6 Opus, Claude 4.5 Sonnet, Gemini 3 Flash/Pro, Grok 4.1, Kimi K2.5, Sonar
 - **Thinking Mode**: Extended thinking support for all compatible models
 - **Deep Research**: Full support for Perplexity's Deep Research mode
-
-## Installation
-
-### Option A: pipx (Recommended - Isolated Install)
-
-```bash
-# Install directly from GitHub (no clone needed)
-pipx install "perplexity-web-mcp[all] @ git+https://github.com/jacob-bd/perplexity-web-mcp.git"
-```
-
-> **Note:** Requires Python 3.10-3.13. If pipx defaults to Python 3.14+, specify a compatible version:
-> ```bash
-> pipx install --python python3.12 "perplexity-web-mcp[all] @ git+https://github.com/jacob-bd/perplexity-web-mcp.git"
-> ```
-
-This installs `pwm-auth`, `pwm-mcp`, and `pwm-api` as global commands.
-
-### Option B: pip (Global or in existing venv)
-
-```bash
-pip install "perplexity-web-mcp[all] @ git+https://github.com/jacob-bd/perplexity-web-mcp.git"
-```
-
-### Option C: Clone + venv (For development)
-
-```bash
-# Clone the repository
-git clone https://github.com/jacob-bd/perplexity-web-mcp.git
-cd perplexity-web-mcp
-
-# Using uv (fast)
-uv venv && source .venv/bin/activate
-uv pip install -e ".[all]"
-
-# Or using standard Python
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[all]"
-```
-
-**Install variants:**
-- `[all]` - MCP server + API server (recommended)
-- `[mcp]` - MCP server only
-- `[api]` - API server only
-
-### Upgrading
-
-To upgrade to the latest version, uninstall first then reinstall:
-
-```bash
-pip uninstall perplexity-web-mcp -y
-pip install "perplexity-web-mcp[all] @ git+https://github.com/jacob-bd/perplexity-web-mcp.git"
-```
-
-**Note**: A simple `pip install --upgrade` may use cached packages. The uninstall/reinstall approach ensures you get the latest code.
-
-After upgrading, restart your MCP client (Claude Code, Cursor, etc.) to reload the server.
-
-## Authentication
-
-```bash
-pwm-auth
-```
-
-This will:
-1. Prompt for your Perplexity email
-2. Send a verification code
-3. Save your session token to `~/.config/perplexity-web-mcp/token`
-4. Display your subscription tier (Free/Pro/Max)
-
-The token is stored globally at `~/.config/perplexity-web-mcp/token`, so you only need to authenticate once. Both the MCP server and API server will automatically use it.
-
-To check your current auth status without logging in:
-```bash
-pwm-auth --check
-```
-
-**Note**: Session tokens typically last ~30 days. Re-run `pwm-auth` if you get 403 errors.
+- **Setup & Skill Management**: Auto-configure MCP for Claude, Cursor, Windsurf, Gemini CLI; install Agent Skills across platforms
+- **Doctor**: Diagnose installation, auth, config, rate limits, and skill status
 
 ---
 
-## Option 1: MCP Server
+## Installation
 
-Use Perplexity models as MCP tools in Claude Desktop, Cursor, or other MCP clients.
+### From PyPI (recommended)
+
+**Using uv:**
+
+```bash
+uv tool install "perplexity-web-mcp[all]"
+```
+
+**Using pipx:**
+
+```bash
+pipx install "perplexity-web-mcp[all]"
+```
+
+**Using pip:**
+
+```bash
+pip install "perplexity-web-mcp[all]"
+```
+
+> **Note:** Requires Python 3.10-3.13.
+
+### From source (for development)
+
+```bash
+git clone https://github.com/jacob-bd/perplexity-web-mcp.git
+cd perplexity-web-mcp
+uv venv && source .venv/bin/activate
+uv pip install -e ".[all]"
+```
+
+### Install variants
+
+- `[all]` -- MCP server + API server (recommended)
+- `[mcp]` -- MCP server only
+- `[api]` -- API server only
+- No extras -- CLI + Python library only
+
+### Upgrading
+
+```bash
+pip install --upgrade perplexity-web-mcp[all]
+```
+
+After upgrading, restart your MCP client (Claude Code, Cursor, etc.) to reload the server.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Authenticate
+pwm login
+
+# 2. Ask a question
+pwm ask "What is quantum computing?"
+
+# 3. Deep research
+pwm research "agentic AI trends 2026"
+
+# 4. Check your remaining quotas
+pwm usage
+
+# 5. Set up MCP for your AI tools
+pwm setup add claude-code
+pwm setup add cursor
+
+# 6. Install the Agent Skill
+pwm skill install claude-code
+
+# 7. Diagnose any issues
+pwm doctor
+```
+
+---
+
+## CLI Reference
+
+### Querying
+
+```bash
+pwm ask "What is quantum computing?"                      # Auto-select best model
+pwm ask "latest AI news" -m gpt52 -s academic             # GPT-5.2 + academic sources
+pwm ask "explain transformers" -m claude_sonnet --thinking # Claude 4.5 + thinking
+pwm ask "query" --json                                    # JSON output
+pwm ask "query" --no-citations                            # No citation URLs
+```
+
+### Deep Research
+
+```bash
+pwm research "agentic AI trends 2026"                     # Full research report
+pwm research "climate policy" -s academic --json           # Academic + JSON output
+```
+
+### Authentication
+
+```bash
+pwm login                                    # Interactive login (email + OTP)
+pwm login --check                            # Check if authenticated
+pwm login --email user@example.com           # Send verification code (non-interactive)
+pwm login --email user@example.com --code 123456  # Complete auth with code
+```
+
+### Usage & Limits
+
+```bash
+pwm usage                  # Check remaining rate limits
+pwm usage --refresh        # Force-refresh from Perplexity servers
+```
+
+### MCP Setup
+
+```bash
+pwm setup list             # Show supported tools and MCP configuration status
+pwm setup add claude-code  # Add MCP server to Claude Code
+pwm setup add cursor       # Add MCP server to Cursor
+pwm setup add windsurf     # Add MCP server to Windsurf
+pwm setup add gemini       # Add MCP server to Gemini CLI
+pwm setup remove cursor    # Remove MCP server from a tool
+```
+
+### Skill Management
+
+```bash
+pwm skill list                            # Show installation status per platform
+pwm skill install claude-code             # Install skill for Claude Code
+pwm skill install cursor --level project  # Install at project level
+pwm skill uninstall gemini-cli            # Remove skill
+pwm skill update                          # Update all outdated skills
+pwm skill show                            # Display skill content
+```
+
+### Doctor
+
+```bash
+pwm doctor                 # Diagnose installation, auth, config, limits
+pwm doctor -v              # Verbose (includes security + per-platform skill status)
+```
+
+### AI Documentation
+
+```bash
+pwm --ai                   # Print comprehensive AI-optimized reference
+```
+
+---
+
+## Models
+
+| CLI Name | Provider | Thinking | Notes |
+|----------|----------|----------|-------|
+| `auto` | Perplexity | No | Auto-selects best model |
+| `sonar` | Perplexity | No | Perplexity's latest model |
+| `deep_research` | Perplexity | No | Monthly quota, in-depth reports |
+| `gpt52` | OpenAI | Toggle | GPT-5.2 |
+| `claude_sonnet` | Anthropic | Toggle | Claude 4.5 Sonnet |
+| `claude_opus` | Anthropic | Toggle | Claude 4.6 Opus (Max tier required) |
+| `gemini_flash` | Google | Toggle | Gemini 3 Flash |
+| `gemini_pro` | Google | Always | Gemini 3 Pro |
+| `grok` | xAI | Toggle | Grok 4.1 |
+| `kimi` | Moonshot | Always | Kimi K2.5 |
+
+**Source focus options:** `web` (default), `academic`, `social`, `finance`, `all`
+
+---
+
+## MCP Server
 
 ### Setup
 
-After running `pwm-auth`, add the MCP server to your client:
+The easiest way to configure MCP:
 
-#### Claude Code CLI
+```bash
+pwm setup add claude-code
+```
 
+Or configure manually for any MCP client:
+
+**Claude Code CLI:**
 ```bash
 claude mcp add perplexity pwm-mcp
 ```
 
-Or manually create/edit `~/.mcp.json`:
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
@@ -121,9 +218,7 @@ Or manually create/edit `~/.mcp.json`:
 }
 ```
 
-#### Claude Desktop
-
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
+**Cursor** (`~/.cursor/mcp.json`):
 ```json
 {
   "mcpServers": {
@@ -133,147 +228,76 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
   }
 }
 ```
-
-#### Cursor IDE
-
-Go to **Settings → Features → MCP Servers → Add Server** and add:
-```json
-{
-  "perplexity": {
-    "command": "pwm-mcp"
-  }
-}
-```
-
-#### If installed from clone (Option C)
-
-Use the full path to the venv:
-```json
-{
-  "mcpServers": {
-    "perplexity": {
-      "command": "/path/to/perplexity-web-mcp/.venv/bin/pwm-mcp"
-    }
-  }
-}
-```
-
-The token is loaded automatically from `~/.config/perplexity-web-mcp/token` (created by `pwm-auth`).
 
 ### Available MCP Tools
 
+**Query tools (14):**
+
 | Tool | Description |
 |------|-------------|
-| `pplx_query` | Flexible tool with model selection and thinking toggle |
+| `pplx_query` | Flexible: model selection + thinking toggle |
 | `pplx_ask` | Quick Q&A (auto-selects best model) |
 | `pplx_deep_research` | In-depth reports with sources |
-| `pplx_sonar` | Perplexity's latest model |
-| `pplx_gpt52` | GPT-5.2 |
-| `pplx_gpt52_thinking` | GPT-5.2 with extended thinking |
-| `pplx_claude_sonnet` | Claude 4.5 Sonnet |
-| `pplx_claude_sonnet_think` | Claude 4.5 Sonnet with extended thinking |
-| `pplx_gemini_flash` | Gemini 3 Flash |
-| `pplx_gemini_flash_think` | Gemini 3 Flash with extended thinking |
+| `pplx_sonar` | Perplexity Sonar |
+| `pplx_gpt52` / `pplx_gpt52_thinking` | GPT-5.2 |
+| `pplx_claude_sonnet` / `pplx_claude_sonnet_think` | Claude 4.5 Sonnet |
+| `pplx_gemini_flash` / `pplx_gemini_flash_think` | Gemini 3 Flash |
 | `pplx_gemini_pro_think` | Gemini 3 Pro (thinking always on) |
-| `pplx_grok` | Grok 4.1 |
-| `pplx_grok_thinking` | Grok 4.1 with extended thinking |
+| `pplx_grok` / `pplx_grok_thinking` | Grok 4.1 |
 | `pplx_kimi_thinking` | Kimi K2.5 (thinking always on) |
 
-**Usage & Limits Tools**:
+**Usage & auth tools (4):**
 
 | Tool | Description |
 |------|-------------|
-| `pplx_usage` | Check remaining quotas (Pro Search, Deep Research, Labs, Agent) |
-
-**Authentication Tools** (for AI-assisted re-authentication):
-
-| Tool | Description |
-|------|-------------|
-| `pplx_auth_status` | Check if authenticated, show subscription tier and remaining quotas |
+| `pplx_usage` | Check remaining quotas |
+| `pplx_auth_status` | Check authentication status |
 | `pplx_auth_request_code` | Send verification code to email |
-| `pplx_auth_complete` | Complete auth with email and 6-digit code |
+| `pplx_auth_complete` | Complete auth with 6-digit code |
 
-**Source Focus Options**: All tools support `source_focus` parameter:
-- `web` (default) - General web search
-- `academic` - Academic/scholarly sources
-- `social` - Social media sources
-- `finance` - Financial sources
-- `all` - All source types
-
-**Citations**: MCP responses include citations with source URLs at the end of each response.
+All query tools support `source_focus`: `web`, `academic`, `social`, `finance`, `all`.
 
 ---
 
-## Option 2: Anthropic API Server (Claude Code)
+## API Server
 
-Use Perplexity models directly in Claude Code by running the API compatibility server.
+Use Perplexity models through Anthropic or OpenAI compatible API endpoints.
 
-### Setup
-
-1. Start the API server:
-   ```bash
-   pwm-api
-   ```
-
-2. Configure Claude Code environment:
-   ```bash
-   export ANTHROPIC_BASE_URL=http://localhost:8080
-   export ANTHROPIC_AUTH_TOKEN=perplexity
-   ```
-
-3. Run Claude Code with a Perplexity model:
-   ```bash
-   claude --model gpt-5.2
-   claude --model claude-sonnet-4-5
-   claude --model gemini-3-pro
-   ```
-
-### Supported Model Names
-
-Use these model names with Claude Code or any Anthropic API client:
-
-| Model Name | Perplexity Model | Thinking |
-|------------|------------------|----------|
-| `perplexity-auto` / `auto` | Best (auto-select) | No |
-| `perplexity-sonar` / `sonar` | Sonar | No |
-| `perplexity-research` / `deep-research` | Deep Research | No |
-| `gpt-5.2` / `gpt-52` | GPT-5.2 | Toggle |
-| `claude-sonnet-4-5` / `claude-4-5-sonnet` | Claude 4.5 Sonnet | Toggle |
-| `claude-opus-4-6` / `claude-4-6-opus` | Claude 4.6 Opus (Max tier) | Toggle |
-| `gemini-3-flash` / `gemini-flash` | Gemini 3 Flash | Toggle |
-| `gemini-3-pro` / `gemini-pro` | Gemini 3 Pro | Always On |
-| `grok-4.1` / `grok` | Grok 4.1 | Toggle |
-| `kimi-k2.5` / `kimi` | Kimi K2.5 | Always On |
-
-**Legacy Claude Code aliases** (for compatibility):
-- `claude-3-5-sonnet` → Claude 4.5 Sonnet
-- `claude-3-opus` → Claude 4.6 Opus
-
-**Thinking Mode**: Models with "Toggle" support thinking when enabled via the `thinking` parameter. Models with "Always On" have thinking enabled by default.
-
-### Features
-
-- **Citations included**: Responses include source URLs at the end (same format as MCP mode)
-- **Streaming support**: Real-time streaming responses with citations appended at the end
-
-### Limitations
-
-- **No tool calling**: Claude Code's local tools (Read, Write, Bash, MCPs) won't work when using Perplexity models. The models can chat but can't execute local actions.
-
----
-
-## Option 3: OpenAI API Server
-
-The API server also supports OpenAI's Chat Completions format.
+### Start the server
 
 ```bash
-# Start server
 pwm-api
+```
 
-# Use with OpenAI SDK
+### Anthropic API (Claude Code)
+
+```bash
+export ANTHROPIC_BASE_URL=http://localhost:8080
+export ANTHROPIC_AUTH_TOKEN=perplexity
+claude --model gpt-5.2
+```
+
+### OpenAI API
+
+```bash
 export OPENAI_BASE_URL=http://localhost:8080/v1
 export OPENAI_API_KEY=anything
 ```
+
+### API Model Names
+
+| API Name | Perplexity Model | Thinking |
+|----------|------------------|----------|
+| `perplexity-auto` | Best (auto-select) | No |
+| `gpt-5.2` | GPT-5.2 | Toggle |
+| `claude-sonnet-4-5` | Claude 4.5 Sonnet | Toggle |
+| `claude-opus-4-6` | Claude 4.6 Opus | Toggle |
+| `gemini-3-flash` | Gemini 3 Flash | Toggle |
+| `gemini-3-pro` | Gemini 3 Pro | Always |
+| `grok-4.1` | Grok 4.1 | Toggle |
+| `kimi-k2.5` | Kimi K2.5 | Always |
+
+Legacy aliases (`claude-3-5-sonnet`, `claude-3-opus`) are supported for compatibility.
 
 ---
 
@@ -287,11 +311,9 @@ conversation = client.create_conversation(
     ConversationConfig(model=Models.CLAUDE_45_SONNET)
 )
 
-# First query
 conversation.ask("What is quantum computing?")
 print(conversation.answer)
 
-# Access citations
 for result in conversation.search_results:
     print(f"Source: {result.url}")
 
@@ -300,52 +322,17 @@ conversation.ask("Explain it simpler")
 print(conversation.answer)
 ```
 
-### Available Models
-
-```python
-from perplexity_web_mcp import Models
-
-Models.BEST                      # Auto-select best model
-Models.SONAR                     # Perplexity Sonar
-Models.DEEP_RESEARCH             # Deep Research mode
-Models.GPT_52                    # GPT-5.2
-Models.GPT_52_THINKING           # GPT-5.2 with thinking
-Models.CLAUDE_45_SONNET          # Claude 4.5 Sonnet
-Models.CLAUDE_45_SONNET_THINKING # Claude 4.5 Sonnet with thinking
-Models.CLAUDE_46_OPUS            # Claude 4.6 Opus (Max tier)
-Models.CLAUDE_46_OPUS_THINKING   # Claude 4.6 Opus with thinking
-Models.GEMINI_3_FLASH            # Gemini 3 Flash
-Models.GEMINI_3_FLASH_THINKING   # Gemini 3 Flash with thinking
-Models.GEMINI_3_PRO_THINKING     # Gemini 3 Pro (thinking only)
-Models.GROK_41                   # Grok 4.1
-Models.GROK_41_THINKING          # Grok 4.1 with thinking
-Models.KIMI_K25_THINKING         # Kimi K2.5 (thinking only)
-```
-
 ---
 
 ## Subscription Tiers & Rate Limits
 
-| Tier | Cost | Pro Search | Deep Research | Labs | 
+| Tier | Cost | Pro Search | Deep Research | Labs |
 |------|------|------------|---------------|------|
 | Free | $0 | 3/day | 1/month | No |
-| Pro | $20/mo | Weekly (average use) | Monthly (average use) | Monthly (average use) |
-| Max | $200/mo | Weekly (advanced use) | Monthly (advanced use) | Monthly (advanced use) |
+| Pro | $20/mo | Weekly pool | Monthly pool | Monthly pool |
+| Max | $200/mo | Weekly pool | Monthly pool | Monthly pool |
 
-The MCP server checks your remaining quotas before each query using Perplexity's internal rate limit API. Use the `pplx_usage` tool to check your current limits at any time.
-
----
-
-## CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `pwm-auth` | Authenticate and save session token (interactive) |
-| `pwm-auth --check` | Check if already authenticated (no login prompt) |
-| `pwm-auth --email EMAIL` | Request verification code (non-interactive) |
-| `pwm-auth --email EMAIL --code CODE` | Complete auth with code (non-interactive) |
-| `pwm-mcp` | Start MCP server |
-| `pwm-api` | Start Anthropic/OpenAI API server |
+The MCP server checks quotas before each query. Use `pwm usage` or `pplx_usage` to check your limits.
 
 ---
 
@@ -353,51 +340,53 @@ The MCP server checks your remaining quotas before each query using Perplexity's
 
 ### Authentication Errors (403)
 
-**Error**: `Access forbidden (403). Session token invalid or expired.`
+Session tokens last ~30 days. Re-authenticate when expired:
 
-Session tokens typically last ~30 days. When expired, re-authenticate:
-
-**Interactive (human)**:
 ```bash
-pwm-auth
+pwm login
 ```
 
-**Non-interactive (AI agents)**:
-```bash
-# Step 1: Request verification code
-pwm-auth --email your@email.com
+**Non-interactive (for AI agents):**
 
-# Step 2: Check email for 6-digit code, then complete auth
-pwm-auth --email your@email.com --code 123456
+```bash
+pwm login --email your@email.com
+```
+```bash
+pwm login --email your@email.com --code 123456
 ```
 
-### AI-Assisted Re-Authentication
+**Via MCP tools (for AI agents without shell):**
 
-**Via MCP tools** (recommended for AI agents using the MCP server):
+1. Call `pplx_auth_request_code(email="your@email.com")`
+2. Check email for 6-digit code
+3. Call `pplx_auth_complete(email="your@email.com", code="123456")`
 
-1. **Detect 403 error** in response
-2. **Call** `pplx_auth_status` to confirm token is expired
-3. **Call** `pplx_auth_request_code(email='YOUR_PERPLEXITY_EMAIL')` to send verification code
-4. **Check email** for 6-digit code from Perplexity
-5. **Call** `pplx_auth_complete(email='YOUR_PERPLEXITY_EMAIL', code='XXXXXX')` to complete auth
+### Diagnose Issues
 
-**Via CLI** (for AI agents with shell access, like OpenClaw):
+```bash
+pwm doctor
+```
 
-1. **Detect 403 error** in response
-2. **Run**: `pwm-auth --check` to confirm token is expired
-3. **Run**: `pwm-auth --email YOUR_PERPLEXITY_EMAIL` to send verification code
-4. **Check email** for 6-digit verification code from Perplexity
-5. **Run**: `pwm-auth --email YOUR_PERPLEXITY_EMAIL --code XXXXXX` to complete auth
-6. **Restart** the `pwm-api` server if using the API (MCP picks up the new token automatically)
-
-The token is saved to `~/.config/perplexity-web-mcp/token` and used automatically by both MCP and API servers.
+This checks installation, authentication, rate limits, MCP configuration, and skill installation -- with fix suggestions for every issue found.
 
 ### Rate Limiting
-- **MCP server**: Automatically checks remaining quotas before each query and blocks requests that would exceed your plan's limits. Use `pplx_usage` to see your current quotas.
-- **API server**: Enforces a 5-second minimum between requests to respect Perplexity's rate limits.
 
-### Claude Code Hangs
-If Claude Code hangs with "zero tokens sent", restart the `pwm-api` server.
+- **CLI/MCP**: Auto-checks quotas before each query, blocks if exhausted
+- **API server**: Enforces 5-second minimum between requests
+
+---
+
+## Agent Skill
+
+This project includes a portable [Agent Skill](https://agentskills.io/) (SKILL.md) that teaches AI agents how to use the CLI and MCP tools. Install it for your platform:
+
+```bash
+pwm skill install claude-code
+pwm skill install cursor
+pwm skill install gemini-cli
+```
+
+The skill follows Anthropic's Agent Skills open standard and works across any compliant AI platform.
 
 ---
 

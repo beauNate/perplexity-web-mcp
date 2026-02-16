@@ -1,6 +1,6 @@
 # Perplexity Web MCP
 
-MCP server and Anthropic API-compatible interface for Perplexity AI's web interface.
+CLI, MCP server, and API-compatible interface for Perplexity AI's web interface.
 
 ## Quick Start
 
@@ -9,10 +9,13 @@ MCP server and Anthropic API-compatible interface for Perplexity AI's web interf
 uv venv && uv pip install -e ".[mcp]"
 
 # Authenticate
-pwm-auth
+pwm login
+
+# Query from terminal
+pwm ask "What is quantum computing?"
 
 # Run MCP server
-PERPLEXITY_SESSION_TOKEN="your_token" pwm-mcp
+pwm-mcp
 ```
 
 ## Project Structure
@@ -20,64 +23,48 @@ PERPLEXITY_SESSION_TOKEN="your_token" pwm-mcp
 ```
 src/perplexity_web_mcp/
 ├── __init__.py          # Package exports
+├── shared.py            # Shared query logic (MODEL_MAP, ask(), used by CLI + MCP)
 ├── core.py              # Perplexity client, Conversation class
 ├── models.py            # Model definitions (GPT, Claude, Gemini, Grok, etc.)
 ├── config.py            # ClientConfig, ConversationConfig
 ├── enums.py             # CitationMode, SearchFocus, SourceFocus
 ├── http.py              # HTTP client with retry/rate limiting
-├── rate_limits.py       # Rate limit checking via /rest/rate-limit/all & /rest/user/settings
+├── rate_limits.py       # Rate limit checking via /rest/rate-limit/all
+├── token_store.py       # Token persistence (~/.config/perplexity-web-mcp/token)
+├── data/                # Bundled Agent Skill (SKILL.md + references/)
 ├── cli/
-│   └── auth.py          # Authentication CLI (pwm-auth)
+│   ├── main.py          # Unified CLI entry point (pwm)
+│   ├── auth.py          # Authentication flow
+│   ├── setup.py         # MCP server setup for AI tools
+│   ├── skill.py         # Agent Skill management
+│   ├── doctor.py        # Diagnostic checks
+│   └── ai_doc.py        # --ai flag documentation
 ├── mcp/
-│   └── server.py        # MCP server implementation (pwm-mcp)
+│   └── server.py        # MCP server (imports from shared.py)
 └── api/
-    └── __init__.py      # Anthropic API compatibility (TODO)
+    └── server.py        # Anthropic/OpenAI API compatibility
 ```
 
-## Key APIs
+## CLI Commands
 
-### Rate Limit Checking
-```python
-from perplexity_web_mcp.rate_limits import fetch_rate_limits, fetch_user_settings, RateLimitCache
-
-# One-shot fetch
-limits = fetch_rate_limits(token)
-print(f"Pro: {limits.remaining_pro}, Research: {limits.remaining_research}")
-
-# Cached (thread-safe, 30s TTL for limits, 5min for settings)
-cache = RateLimitCache(token)
-limits = cache.get_rate_limits()  # Fetches or returns cached
-settings = cache.get_user_settings()
-cache.invalidate_rate_limits()    # Force refresh on next call
+```bash
+pwm ask "query" [-m MODEL] [-t] [-s SOURCE]  # Query Perplexity
+pwm research "query" [-s SOURCE]              # Deep research
+pwm login [--check] [--email E --code C]      # Authentication
+pwm usage [--refresh]                          # Rate limits
+pwm setup [list|add|remove] CLIENT             # MCP config
+pwm skill [list|install|uninstall] TOOL        # Skill management
+pwm doctor [-v]                                # Diagnostics
+pwm --ai                                       # AI reference doc
 ```
 
-MCP server uses pre-flight limit checking before every query.
-The `pplx_usage` tool exposes limits to calling LLMs.
+## Models
 
-### Subscription Detection
-```python
-from perplexity_web_mcp.cli.auth import get_user_info, SubscriptionTier
-
-user = get_user_info(token)
-if user.subscription_tier == SubscriptionTier.PRO:
-    # Pro features available
-```
-
-### Models Available
-- `Models.BEST` - Auto-select best model
-- `Models.DEEP_RESEARCH` - In-depth reports
-- `Models.SONAR` - Perplexity's model
-- `Models.GPT_52` / `Models.GPT_52_THINKING`
-- `Models.CLAUDE_45_SONNET` / `Models.CLAUDE_45_SONNET_THINKING`
-- `Models.CLAUDE_46_OPUS` / `Models.CLAUDE_46_OPUS_THINKING`
-- `Models.GEMINI_3_FLASH` / `Models.GEMINI_3_FLASH_THINKING`
-- `Models.GEMINI_3_PRO_THINKING`
-- `Models.GROK_41` / `Models.GROK_41_THINKING`
-- `Models.KIMI_K25_THINKING`
-
-## Environment Variables
-
-- `PERPLEXITY_SESSION_TOKEN` - Session token from authentication
+- `auto` / `sonar` / `deep_research`
+- `gpt52` (+ thinking)
+- `claude_sonnet` / `claude_opus` (+ thinking)
+- `gemini_flash` (+ thinking) / `gemini_pro` (always thinking)
+- `grok` (+ thinking) / `kimi` (always thinking)
 
 ## Development
 
@@ -85,7 +72,7 @@ if user.subscription_tier == SubscriptionTier.PRO:
 # Install with dev dependencies
 uv pip install -e ".[mcp,api]"
 
-# Run tests (includes unit + integration tests for rate limits)
+# Run tests
 uv run --group tests --extra mcp pytest tests/ -v
 
 # Run just unit tests (no network calls)
