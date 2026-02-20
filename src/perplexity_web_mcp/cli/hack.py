@@ -77,8 +77,8 @@ def _hack_claude(args: list[str]) -> int:
     server_process = subprocess.Popen(
         [sys.executable, "-m", "perplexity_web_mcp.api.server"],
         env=server_env,
-        stdout=sys.stderr,
-        stderr=sys.stderr,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
 
     try:
