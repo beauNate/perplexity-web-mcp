@@ -55,6 +55,20 @@ def cmd_hack(args: list[str]) -> int:
 
 def _hack_claude(args: list[str]) -> int:
     """Launch Claude Code connected to the local API server."""
+    if "--help" in args or "-h" in args:
+        print("pwm hack claude - Launch Claude Code using Perplexity models\n")
+        print("Usage:")
+        print("  pwm hack claude [options]\n")
+        print("Options:")
+        print("  -m, --model MODEL   Specify the model to use (see available models below)")
+        print("  -h, --help          Show this help message")
+        print("  [other options]     Any other options are passed directly to Claude Code\n")
+        print("Available Models:")
+        from perplexity_web_mcp.api.server import AVAILABLE_MODELS
+        for model in AVAILABLE_MODELS:
+            print(f"  {model['id']:<20} {model['description']}")
+        return 0
+
     # 1. Verify claude is installed
     claude_path = shutil.which("claude")
     if not claude_path:
@@ -103,7 +117,13 @@ def _hack_claude(args: list[str]) -> int:
 
         # 5. Check/Append model argument
         claude_args = args[:]
-        if "-m" not in claude_args and "--model" not in claude_args:
+        
+        # Intercept `-m` and convert to `--model` since Claude Code doesn't support `-m` natively
+        if "-m" in claude_args:
+            idx = claude_args.index("-m")
+            claude_args[idx] = "--model"
+            
+        if "--model" not in claude_args:
             claude_args.extend(["--model", "perplexity-auto"])
 
         # 6. Execute Claude Code interactively
