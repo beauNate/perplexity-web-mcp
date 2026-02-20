@@ -19,6 +19,14 @@ Use your Perplexity Pro/Max subscription to access premium models (GPT-5.2, Clau
 - **Setup & Skill Management**: Auto-configure MCP for Claude, Cursor, Windsurf, Gemini CLI; install Agent Skills across platforms
 - **Doctor**: Diagnose installation, auth, config, rate limits, and skill status
 
+## Vibe Coding Alert
+
+Full transparency: this project was built by a non-developer using AI coding assistants. If you're an experienced Python developer, you might look at this codebase and wince. That's okay.
+
+The goal here was to learn — both about building CLI tools in Python and about how modern web applications work under the hood. The code works, but it's very much a learning project released solely for the purpose of research and education, not a polished product.
+
+**If you know better, teach us.** PRs, issues, and architectural advice are all welcome. This is open source specifically because human expertise is irreplaceable.
+
 ---
 
 ## Installation
