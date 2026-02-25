@@ -57,6 +57,7 @@ def _print_help() -> None:
         f"  -s, --source SOURCE   Source focus ({', '.join(SOURCE_FOCUS_NAMES)}) [default: web]\n"
         "  --json                Output as JSON (answer + citations)\n"
         "  --no-citations        Suppress citation URLs\n"
+        "  --intent INTENT       Routing intent: quick, standard, detailed, research [default: standard]\n"
         "\n"
         "Research options:\n"
         f"  -s, --source SOURCE   Source focus ({', '.join(SOURCE_FOCUS_NAMES)}) [default: web]\n"
@@ -104,12 +105,15 @@ def _cmd_ask(args: list[str]) -> int:
     source: SourceFocusName = "web"
     json_output = False
     no_citations = False
+    explicit_model = False
+    intent = "standard"
 
     i = 1
     while i < len(args):
         arg = args[i]
         if arg in ("-m", "--model") and i + 1 < len(args):
             model_name = args[i + 1]
+            explicit_model = True
             i += 2
         elif arg in ("-t", "--thinking"):
             thinking = True
@@ -123,41 +127,58 @@ def _cmd_ask(args: list[str]) -> int:
         elif arg == "--no-citations":
             no_citations = True
             i += 1
+        elif arg == "--intent" and i + 1 < len(args):
+            intent = args[i + 1]
+            i += 2
         else:
             print(f"Unknown option: {arg}", file=sys.stderr)
             return 1
-
-    if model_name not in MODEL_MAP:
-        print(f"Error: Unknown model '{model_name}'. Available: {', '.join(MODEL_NAMES)}", file=sys.stderr)
-        return 1
 
     if source not in SOURCE_FOCUS_NAMES:
         print(f"Error: Unknown source '{source}'. Available: {', '.join(SOURCE_FOCUS_NAMES)}", file=sys.stderr)
         return 1
 
-    model = resolve_model(model_name, thinking=thinking)
-    result = ask(query, model, source)
+    if explicit_model:
+        if model_name not in MODEL_MAP:
+            print(f"Error: Unknown model '{model_name}'. Available: {', '.join(MODEL_NAMES)}", file=sys.stderr)
+            return 1
 
-    if json_output:
-        import orjson
+        model = resolve_model(model_name, thinking=thinking)
+        result = ask(query, model, source)
 
-        parts = result.split("\n\nCitations:")
-        answer_text = parts[0]
-        citations = []
-        if len(parts) > 1:
-            for line in parts[1].strip().split("\n"):
-                line = line.strip()
-                if line.startswith("[") and "]: " in line:
-                    url = line.split("]: ", 1)[1]
-                    citations.append(url)
-        data = {"answer": answer_text, "citations": citations, "model": model_name, "source": source}
-        sys.stdout.buffer.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
-        sys.stdout.buffer.write(b"\n")
-    elif no_citations:
-        parts = result.split("\n\nCitations:")
-        print(parts[0])
+        if json_output:
+            import orjson
+
+            parts = result.split("\n\nCitations:")
+            answer_text = parts[0]
+            citations = []
+            if len(parts) > 1:
+                for line in parts[1].strip().split("\n"):
+                    line = line.strip()
+                    if line.startswith("[") and "]: " in line:
+                        url = line.split("]: ", 1)[1]
+                        citations.append(url)
+            data = {"answer": answer_text, "citations": citations, "model": model_name, "source": source}
+            sys.stdout.buffer.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+            sys.stdout.buffer.write(b"\n")
+        elif no_citations:
+            parts = result.split("\n\nCitations:")
+            print(parts[0])
+        else:
+            print(result)
     else:
-        print(result)
+        from perplexity_web_mcp.shared import smart_ask
+
+        response = smart_ask(query, intent=intent, source_focus=source)
+        if json_output:
+            import orjson
+
+            sys.stdout.buffer.write(orjson.dumps(response.to_dict(), option=orjson.OPT_INDENT_2))
+            sys.stdout.buffer.write(b"\n")
+        elif no_citations:
+            print(response.answer)
+        else:
+            print(response.format_response())
 
     return 0
 

@@ -71,7 +71,7 @@ class TestCmdAsk:
 
     @patch("perplexity_web_mcp.cli.main.ask", return_value="The answer")
     def test_basic_ask(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
-        code = _cmd_ask(["What is AI?"])
+        code = _cmd_ask(["What is AI?", "-m", "auto"])
         assert code == 0
         assert "The answer" in capsys.readouterr().out
         mock_ask.assert_called_once()
@@ -103,7 +103,7 @@ class TestCmdAsk:
 
     @patch("perplexity_web_mcp.cli.main.ask", return_value="Answer\n\nCitations:\n[1]: https://x.com")
     def test_no_citations_flag(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
-        code = _cmd_ask(["query", "--no-citations"])
+        code = _cmd_ask(["query", "-m", "auto", "--no-citations"])
         assert code == 0
         out = capsys.readouterr().out
         assert "Answer" in out
@@ -113,7 +113,7 @@ class TestCmdAsk:
     def test_json_flag(self, mock_ask: MagicMock, capsys: pytest.CaptureFixture) -> None:
         import orjson
 
-        code = _cmd_ask(["query", "--json"])
+        code = _cmd_ask(["query", "-m", "auto", "--json"])
         assert code == 0
         raw = capsys.readouterr().out
         data = orjson.loads(raw)
@@ -131,7 +131,7 @@ class TestCmdAsk:
 
     @patch("perplexity_web_mcp.cli.main.ask", return_value="response")
     def test_source_flag(self, mock_ask: MagicMock) -> None:
-        _cmd_ask(["query", "-s", "academic"])
+        _cmd_ask(["query", "-m", "auto", "-s", "academic"])
         call_args = mock_ask.call_args
         assert call_args[0][2] == "academic"
 
