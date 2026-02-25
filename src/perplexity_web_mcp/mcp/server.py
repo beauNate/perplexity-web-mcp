@@ -19,6 +19,7 @@ from perplexity_web_mcp.shared import (
     ask,
     get_limit_cache,
     resolve_model,
+    smart_ask,
 )
 from perplexity_web_mcp.token_store import load_token, save_token
 
@@ -26,19 +27,20 @@ from perplexity_web_mcp.token_store import load_token, save_token
 mcp = FastMCP(
     "perplexity-web-mcp",
     instructions=(
-        "Search the web with Perplexity AI using premium models. "
-        "Use pplx_query for flexible model selection with thinking toggle. "
-        "Or use model-specific tools like pplx_gpt52, pplx_claude_sonnet, etc. "
-        "All tools support source_focus: web, academic, social, finance, all. "
-        "\n\n"
-        "USAGE LIMITS: Call pplx_usage before heavy use to check remaining quotas. "
-        "The server checks limits automatically and will warn you before queries "
-        "that would exceed your plan's allowance.\n\n"
-        "AUTHENTICATION: If you get a 403 error or 'token expired' message, use these tools to re-authenticate:\n"
+        "Search the web with Perplexity AI using premium models.\n\n"
+        "RECOMMENDED: Use pplx_smart_query as your default tool. It automatically "
+        "checks your remaining quotas and selects the best model/search type. "
+        "Pass intent='quick' for simple lookups, 'standard' for normal questions, "
+        "'detailed' for complex analysis, or 'research' for deep research.\n\n"
+        "For explicit model control, use pplx_query or model-specific tools "
+        "(pplx_gpt52, pplx_claude_sonnet, etc.). These bypass quota-aware routing.\n\n"
+        "All tools support source_focus: web, academic, social, finance, all.\n\n"
+        "USAGE LIMITS: pplx_smart_query handles this automatically. "
+        "Call pplx_usage to see raw quota numbers.\n\n"
+        "AUTHENTICATION: If you get a 403 error or 'token expired' message:\n"
         "1. pplx_auth_status - Check current authentication status\n"
-        "2. pplx_auth_request_code - Send verification code to email (requires email address)\n"
-        "3. pplx_auth_complete - Complete auth with the 6-digit code from email\n"
-        "Session tokens last ~30 days. After re-authenticating, all pplx_* tools will work again."
+        "2. pplx_auth_request_code - Send verification code to email\n"
+        "3. pplx_auth_complete - Complete auth with the 6-digit code"
     ),
 )
 
@@ -145,6 +147,35 @@ def pplx_grok_thinking(query: str, source_focus: SourceFocusName = "web") -> str
 def pplx_kimi_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
     """Kimi K2.5 Thinking - Moonshot AI's latest model."""
     return ask(query, Models.KIMI_K25_THINKING, source_focus)
+
+
+@mcp.tool
+def pplx_smart_query(
+    query: str,
+    intent: str = "standard",
+    source_focus: SourceFocusName = "web",
+) -> str:
+    """Quota-aware query — automatically selects the best model based on current limits.
+
+    RECOMMENDED default tool. Checks your remaining Pro Search and Deep Research
+    quotas, then picks the optimal model and search type for your query.
+
+    Intent guides the routing:
+    - quick: Simple fact lookup (uses Sonar, no Pro quota consumed)
+    - standard: Normal question (uses Pro Search with auto model)
+    - detailed: Complex analysis (uses premium model like Claude/GPT)
+    - research: Deep dive (uses Deep Research if quota available, else falls back to Pro)
+
+    Response includes a metadata block showing the model used, routing reason,
+    and current quota snapshot.
+
+    Args:
+        query: The question to ask
+        intent: Query complexity hint — quick, standard, detailed, research
+        source_focus: Source type — web, academic, social, finance, all
+    """
+    result = smart_ask(query, intent=intent, source_focus=source_focus)
+    return result.format_response()
 
 
 # =============================================================================
