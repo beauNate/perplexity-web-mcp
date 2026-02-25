@@ -8,7 +8,7 @@ description: >-
   or wants to query premium models like GPT-5.2, Claude, Gemini, Grok through
   Perplexity's web interface.
 metadata:
-  version: "0.6.0"
+  version: "0.7.0"
   author: "Jacob Ben David"
 ---
 
@@ -34,6 +34,40 @@ pwm login --check       # Check auth status
 3. **Check limits before heavy use**: Run `pwm usage` or call `pplx_usage()`
 4. **Deep Research uses a separate monthly quota**: Don't exhaust it accidentally
 
+## Smart Routing (Recommended)
+
+The tool includes quota-aware routing. Instead of choosing a model manually,
+use the smart query interface and let it pick the best option:
+
+```
+MCP:  pplx_smart_query(query, intent="standard")
+CLI:  pwm ask "query"                    # auto routes via smart logic
+CLI:  pwm ask "query" --intent quick     # explicit intent hint
+```
+
+### Intent Guide
+
+| Intent | When to Use | What Happens |
+|--------|-------------|--------------|
+| quick | Simple facts, definitions, lookups | Sonar (no Pro quota used) |
+| standard | Normal questions (default) | Pro Search with auto model |
+| detailed | Complex analysis, comparisons | Premium model (Claude/GPT) |
+| research | Deep dives, comprehensive reports | Deep Research (monthly quota) |
+
+### Quota-Aware Behavior
+
+- **Healthy quota**: Uses the ideal model for your intent
+- **Critical quota (<10% pro remaining)**: Downgrades detailed→auto to conserve
+- **Exhausted quota**: Falls back to Sonar for everything except research
+- **Research exhausted**: Falls back to premium Pro Search
+- Response metadata shows what model was used and why
+
+### When to Use Explicit Models Instead
+
+- You need a *specific* model's capabilities (e.g., Gemini for multimodal)
+- You're comparing model outputs
+- The smart router's choice isn't working for your use case
+
 ## Tool Detection
 
 Check which interface is available before proceeding:
@@ -55,9 +89,10 @@ else:
 ```
 User wants to...
 |
-+-- Search the web / ask a question
-|   +-- CLI:  pwm ask "query" [-m MODEL] [-t] [-s SOURCE]
-|   +-- MCP:  pplx_ask(query) or pplx_query(query, model, thinking, source_focus)
++-- Search the web / ask a question (RECOMMENDED: smart routing)
+|   +-- CLI:  pwm ask "query"                    # smart routing (default)
+|   +-- MCP:  pplx_smart_query(query)            # smart routing (default)
+|   +-- Explicit model: pwm ask "query" -m gpt52  or  pplx_query(query, model="gpt52")
 |
 +-- Deep research on a topic
 |   +-- CLI:  pwm research "query"
@@ -151,6 +186,7 @@ pwm usage --refresh         # Force-refresh from server
 
 | Tool | Purpose |
 |------|---------|
+| `pplx_smart_query` | **Recommended**: quota-aware auto model selection |
 | `pplx_query` | Flexible: model + thinking + source selection |
 | `pplx_ask` | Quick Q&A (auto model) |
 | `pplx_deep_research` | In-depth reports (monthly quota) |
