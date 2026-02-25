@@ -15,6 +15,7 @@ from .core import Perplexity
 from .enums import CitationMode, SearchFocus, SourceFocus
 from .models import Model, Models
 from .rate_limits import RateLimitCache
+from .router import Intent, SmartResponse, SmartRouter
 from .token_store import get_token_or_raise, load_token
 
 
@@ -280,3 +281,60 @@ def _format_error(error: Exception) -> str:
             f"Or via MCP: pplx_auth_request_code -> pplx_auth_complete"
         )
     return f"Error ({error_type}): {error_str}"
+
+
+# ---------------------------------------------------------------------------
+# Smart ask (quota-aware routing)
+# ---------------------------------------------------------------------------
+
+_router = SmartRouter()
+
+
+def smart_ask(
+    query: str,
+    intent: str = "standard",
+    source_focus: SourceFocusName = "web",
+) -> SmartResponse:
+    """Execute a query with automatic quota-aware model routing.
+
+    Unlike ask(), which requires an explicit model, smart_ask() picks the
+    best model for the given *intent* based on current rate limits.
+    """
+    cache = get_limit_cache()
+    limits = cache.get_rate_limits() if cache else None
+
+    try:
+        parsed_intent = Intent(intent)
+    except ValueError:
+        parsed_intent = Intent.STANDARD
+
+    decision = _router.route(parsed_intent, limits)
+
+    client = get_client()
+    sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
+
+    try:
+        conversation = client.create_conversation(
+            ConversationConfig(
+                model=decision.model,
+                citation_mode=CitationMode.DEFAULT,
+                search_focus=SearchFocus.WEB,
+                source_focus=sources,
+            )
+        )
+
+        conversation.ask(query)
+
+        rate_cache = get_limit_cache()
+        if rate_cache:
+            rate_cache.invalidate_rate_limits()
+
+        answer = conversation.answer or "No answer received"
+        citations = [r.url or "" for r in (conversation.search_results or [])]
+
+        return SmartResponse(answer=answer, citations=citations, routing=decision)
+
+    except Exception as error:
+        return SmartResponse(
+            answer=_format_error(error), citations=[], routing=decision
+        )

@@ -7,6 +7,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from perplexity_web_mcp.models import Model, Models
+from perplexity_web_mcp.rate_limits import RateLimits
+from perplexity_web_mcp.router import SmartResponse
 from perplexity_web_mcp.shared import (
     MODEL_MAP,
     MODEL_NAMES,
@@ -14,6 +16,7 @@ from perplexity_web_mcp.shared import (
     SOURCE_FOCUS_NAMES,
     ask,
     resolve_model,
+    smart_ask,
 )
 
 
@@ -188,3 +191,94 @@ class TestAsk:
         result = ask("question", Models.BEST)
         assert "Error" in result
         assert "Network failure" in result
+
+
+# ============================================================================
+# 4. smart_ask function (mocked)
+# ============================================================================
+
+
+class TestSmartAsk:
+    """Test the shared smart_ask() function with mocked Perplexity client."""
+
+    @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
+    @patch("perplexity_web_mcp.shared.get_client")
+    def test_returns_smart_response(
+        self, mock_client_fn: MagicMock, mock_cache: MagicMock
+    ) -> None:
+        mock_conv = MagicMock()
+        mock_conv.answer = "Smart answer"
+        mock_conv.search_results = []
+        mock_client = MagicMock()
+        mock_client.create_conversation.return_value = mock_conv
+        mock_client_fn.return_value = mock_client
+
+        result = smart_ask("question")
+        assert isinstance(result, SmartResponse)
+        assert result.answer == "Smart answer"
+
+    @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
+    @patch("perplexity_web_mcp.shared.get_client")
+    def test_quick_intent_uses_sonar(
+        self, mock_client_fn: MagicMock, mock_cache: MagicMock
+    ) -> None:
+        mock_conv = MagicMock()
+        mock_conv.answer = "Quick answer"
+        mock_conv.search_results = []
+        mock_client = MagicMock()
+        mock_client.create_conversation.return_value = mock_conv
+        mock_client_fn.return_value = mock_client
+
+        result = smart_ask("question", intent="quick")
+        assert result.routing.model_name == "sonar"
+
+    @patch("perplexity_web_mcp.shared.get_limit_cache")
+    @patch("perplexity_web_mcp.shared.get_client")
+    def test_downgrades_when_exhausted(
+        self, mock_client_fn: MagicMock, mock_cache_fn: MagicMock
+    ) -> None:
+        limits = RateLimits(remaining_pro=0, remaining_research=0)
+        mock_cache = MagicMock()
+        mock_cache.get_rate_limits.return_value = limits
+        mock_cache_fn.return_value = mock_cache
+
+        mock_conv = MagicMock()
+        mock_conv.answer = "Downgraded answer"
+        mock_conv.search_results = []
+        mock_client = MagicMock()
+        mock_client.create_conversation.return_value = mock_conv
+        mock_client_fn.return_value = mock_client
+
+        result = smart_ask("question", intent="detailed")
+        assert result.routing.model_name == "sonar"
+        assert result.routing.was_downgraded is True
+
+    @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
+    @patch("perplexity_web_mcp.shared.get_client")
+    def test_error_returns_smart_response_with_error(
+        self, mock_client_fn: MagicMock, mock_cache: MagicMock
+    ) -> None:
+        mock_client = MagicMock()
+        mock_client.create_conversation.side_effect = RuntimeError("Boom")
+        mock_client_fn.return_value = mock_client
+
+        result = smart_ask("question")
+        assert isinstance(result, SmartResponse)
+        assert "Error" in result.answer
+        assert "Boom" in result.answer
+        assert result.citations == []
+
+    @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
+    @patch("perplexity_web_mcp.shared.get_client")
+    def test_invalid_intent_defaults_to_standard(
+        self, mock_client_fn: MagicMock, mock_cache: MagicMock
+    ) -> None:
+        mock_conv = MagicMock()
+        mock_conv.answer = "Fallback answer"
+        mock_conv.search_results = []
+        mock_client = MagicMock()
+        mock_client.create_conversation.return_value = mock_conv
+        mock_client_fn.return_value = mock_client
+
+        result = smart_ask("question", intent="bogus")
+        assert result.routing.intent.value == "standard"
