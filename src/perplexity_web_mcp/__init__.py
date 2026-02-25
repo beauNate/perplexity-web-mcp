@@ -18,6 +18,8 @@ from .exceptions import (
 )
 from .models import Model, Models
 from .rate_limits import RateLimitCache, RateLimits, SourceLimit, UserSettings, fetch_rate_limits, fetch_user_settings
+from .router import Intent, QuotaLevel, QuotaState, RoutingDecision, SmartResponse, SmartRouter
+from .shared import smart_ask
 from .types import Coordinates, Response, SearchResultItem
 
 
@@ -35,19 +37,25 @@ __all__: list[str] = [
     "FileUploadError",
     "FileValidationError",
     "HTTPError",
+    "Intent",
     "LogLevel",
     "Model",
     "Models",
     "Perplexity",
     "PerplexityError",
+    "QuotaLevel",
+    "QuotaState",
     "RateLimitCache",
     "RateLimits",
     "RateLimitError",
     "ResearchClarifyingQuestionsError",
+    "RoutingDecision",
     "Response",
     "ResponseParsingError",
     "SearchFocus",
     "SearchResultItem",
+    "SmartResponse",
+    "SmartRouter",
     "SourceFocus",
     "SourceLimit",
     "StreamingError",
@@ -55,4 +63,5 @@ __all__: list[str] = [
     "UserSettings",
     "fetch_rate_limits",
     "fetch_user_settings",
+    "smart_ask",
 ]
