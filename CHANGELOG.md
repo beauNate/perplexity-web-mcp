@@ -4,6 +4,14 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.8.2] - 2026-03-05
+
+### Fixed
+
+- **`pwm skill install all` detection** — Tool detection now verifies the config directory has content beyond the `skills/` subdirectory we create. Prevents installing to tools that aren't actually present on the system.
+
+---
+
 ## [0.8.1] - 2026-03-05
 
 ### Added

@@ -88,9 +88,20 @@ def _get_targets() -> list[SkillTarget]:
 def _is_tool_detected(target: SkillTarget) -> bool:
     """Check if a tool appears to be installed on this system.
 
-    Looks for the tool's config directory (parent of its skills dir).
+    Looks for the tool's config directory (parent of its skills dir) and
+    verifies the tool itself created content there -- not just our own
+    ``skills/`` subdirectory from a previous install.
     """
-    return target.user_dir.parent.is_dir()
+    config_root = target.user_dir.parent
+    if not config_root.is_dir():
+        return False
+    try:
+        for child in config_root.iterdir():
+            if child.name != "skills":
+                return True
+    except OSError:
+        return False
+    return False
 
 
 def _find_skill_source() -> Path | None:
