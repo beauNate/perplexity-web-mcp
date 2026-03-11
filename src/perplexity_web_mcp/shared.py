@@ -232,6 +232,47 @@ def _execute_query(
     return answer, conversation.search_results or []
 
 
+_MODEL_DISPLAY_NAMES: dict[str, str] = {
+    model.identifier: name
+    for name, (base, thinking) in MODEL_MAP.items()
+    for model in ([base] if thinking is None else [base, thinking])
+}
+
+
+def _format_quota_footer(model: Model) -> str:
+    """Build a compact quota footer showing remaining limits after a query."""
+    cache = get_limit_cache()
+    if cache is None:
+        return ""
+
+    limits = cache.get_rate_limits()
+    if limits is None:
+        return ""
+
+    model_label = _MODEL_DISPLAY_NAMES.get(model.identifier, model.identifier)
+    is_research = is_research_model(model)
+    cost_label = "Deep Research" if is_research else "Pro Search"
+
+    parts = [
+        f"\n\n---\n[Quota] Used 1 {cost_label} query ({model_label})",
+        f" | Pro: {limits.remaining_pro} left",
+        f" | Research: {limits.remaining_research} left",
+    ]
+
+    pro_max = 300
+    if limits.remaining_pro > 0 and limits.remaining_pro / pro_max < 0.20:
+        parts.append(
+            " | WARNING: Pro quota running low"
+            " — prefer pplx_smart_query(intent='quick') or pplx_sonar for simple lookups"
+        )
+    elif limits.remaining_pro <= 0:
+        parts.append(
+            " | EXHAUSTED: Use pplx_smart_query(intent='quick') or pplx_sonar to avoid failures"
+        )
+
+    return "".join(parts)
+
+
 def ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
     """Execute a query with a specific model.
 
@@ -274,6 +315,8 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
         for i, result in enumerate(search_results, 1):
             url = result.url or ""
             response_parts.append(f"\n[{i}]: {url}")
+
+    response_parts.append(_format_quota_footer(model))
 
     return "".join(response_parts)
 

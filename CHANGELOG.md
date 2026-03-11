@@ -4,6 +4,26 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.9.0] - 2026-03-11
+
+### Added
+
+- **Quota-aware usage protocol** — Comprehensive AI agent guidelines for conserving Pro Search and Deep Research quotas. Includes a cost model table, mandatory check-before-query protocol, intent classification rubric with concrete examples, and a decision flowchart.
+- **Quota footer on all direct tool responses** — Every `ask()` response now appends a footer showing the query cost (Pro Search or Deep Research), remaining quotas, and warnings when Pro quota is running low (<20%) or exhausted. Helps AI agents track usage in real-time even when bypassing smart routing.
+- **Cost labels on all MCP tool docstrings** — Every tool now declares its quota cost: `pplx_sonar` marked FREE, model-specific tools marked "COSTS 1 PRO SEARCH QUERY", `pplx_deep_research` marked "COSTS 1 DEEP RESEARCH QUERY (limited monthly pool)".
+- **Quota-aware querying section in `pwm --ai`** — New section in the AI reference doc covering cost model, mandatory protocol, intent guide, and decision rules.
+- **Cost summary table in `mcp-tools.md`** — Reference doc now includes per-tool cost information.
+
+### Changed
+
+- **MCP server instructions rewritten** — Now lead with cost model, mandatory quota-check protocol, intent classification guidance, and explicit "default to quick" directive. Previously only mentioned `pplx_smart_query` as "recommended".
+- **`pplx_smart_query` docstring** — Rewritten to emphasize it is the "RECOMMENDED DEFAULT TOOL" and that `intent='quick'` is free.
+- **`pplx_usage` docstring** — Now says "CALL THIS AT THE START OF EVERY SESSION".
+- **SKILL.md overhauled** — Critical Rules section updated with quota-first behavior. New "Quota-Aware Usage Protocol (MANDATORY)" section with cost table, session checklist, classification rubric (7+ quick examples, 5 standard, 3 detailed, explicit research rules), decision flowchart, and automatic quota protection details. MCP Tools Summary table now includes a Cost column.
+- Skill metadata version bumped to 0.9.0.
+
+---
+
 ## [0.8.3] - 2026-03-08
 
 ### Added

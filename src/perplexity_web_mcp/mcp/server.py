@@ -27,21 +27,37 @@ from perplexity_web_mcp.token_store import load_token, save_token
 mcp = FastMCP(
     "perplexity-web-mcp",
     instructions=(
-        "Search the web with Perplexity AI using premium models.\n\n"
-        "RECOMMENDED: Use pplx_smart_query as your default tool. It automatically "
-        "checks your remaining quotas and selects the best model/search type. "
-        "Pass intent='quick' for simple lookups, 'standard' for normal questions, "
-        "'detailed' for complex analysis, or 'research' for deep research.\n\n"
-        "For explicit model control, use pplx_query or model-specific tools "
-        "(pplx_gpt52, pplx_claude_sonnet, etc.). These bypass quota-aware routing.\n\n"
+        "Search the web with Perplexity AI. QUOTA IS LIMITED — read these rules.\n\n"
+
+        "COST MODEL (critical):\n"
+        "- pplx_sonar / pplx_smart_query(intent='quick'): FREE — no Pro quota used\n"
+        "- pplx_ask / pplx_query / all model-specific tools: 1 PRO SEARCH each (weekly pool)\n"
+        "- pplx_deep_research: 1 DEEP RESEARCH each (small monthly pool, ~5-10 total)\n\n"
+
+        "MANDATORY PROTOCOL:\n"
+        "1. On your FIRST query of the session, call pplx_usage() to check remaining quotas.\n"
+        "2. DEFAULT to pplx_smart_query(intent='quick') for most lookups — it uses Sonar "
+        "(free) and only upgrades to Pro when the query genuinely needs it.\n"
+        "3. Only use 'standard' or 'detailed' intent when the question requires synthesis, "
+        "comparison, multi-step reasoning, or very current data that Sonar can't handle.\n"
+        "4. Reserve pplx_deep_research for user-requested deep dives only — NEVER use it "
+        "autonomously without asking the user first.\n"
+        "5. Avoid model-specific tools (pplx_gpt54, pplx_claude_sonnet, etc.) unless the "
+        "user explicitly requests a specific model. Each call costs 1 Pro Search query.\n\n"
+
+        "WHEN TO USE EACH INTENT:\n"
+        "- quick: Facts, definitions, 'what is X', current date/weather, simple lookups\n"
+        "- standard: How-to questions, comparisons, explanations needing web sources\n"
+        "- detailed: Complex analysis, multi-source synthesis, technical deep-dives\n"
+        "- research: Comprehensive reports (only when user explicitly asks for research)\n\n"
+
         "All tools support source_focus: none, web, academic, social, finance, all.\n"
         "Use source_focus='none' for model-only queries without web search.\n\n"
-        "USAGE LIMITS: pplx_smart_query handles this automatically. "
-        "Call pplx_usage to see raw quota numbers.\n\n"
+
         "AUTHENTICATION: If you get a 403 error or 'token expired' message:\n"
-        "1. pplx_auth_status - Check current authentication status\n"
-        "2. pplx_auth_request_code - Send verification code to email\n"
-        "3. pplx_auth_complete - Complete auth with the 6-digit code"
+        "1. pplx_auth_status — check current authentication status\n"
+        "2. pplx_auth_request_code — send verification code to email\n"
+        "3. pplx_auth_complete — complete auth with the 6-digit code"
     ),
 )
 
@@ -58,7 +74,10 @@ def pplx_query(
     thinking: bool = False,
     source_focus: SourceFocusName = "web",
 ) -> str:
-    """Query Perplexity AI with model selection and thinking toggle.
+    """Query Perplexity AI with explicit model selection. COSTS 1 PRO SEARCH QUERY per call.
+
+    Prefer pplx_smart_query for automatic quota-aware routing. Use this only when
+    you need a specific model or thinking mode.
 
     Args:
         query: The question to ask
@@ -75,91 +94,91 @@ def pplx_query(
 
 @mcp.tool
 def pplx_ask(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Ask a question with real-time data from the internet (auto-selects best model)."""
+    """Quick Q&A with auto model. COSTS 1 PRO SEARCH QUERY. Prefer pplx_smart_query(intent='quick') for free lookups."""
     return ask(query, Models.BEST, source_focus)
 
 
 @mcp.tool
 def pplx_deep_research(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Deep Research - In-depth reports with more sources, charts, and advanced reasoning."""
+    """Deep Research — in-depth reports. COSTS 1 DEEP RESEARCH QUERY (limited monthly pool, typically 5-10 total). Only use when the user explicitly requests deep research."""
     return ask(query, Models.DEEP_RESEARCH, source_focus)
 
 
 @mcp.tool
 def pplx_sonar(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Sonar - Perplexity's latest model."""
+    """Sonar — Perplexity's latest model. FREE: does NOT consume Pro Search quota."""
     return ask(query, Models.SONAR, source_focus)
 
 
 @mcp.tool
 def pplx_gpt54(query: str, source_focus: SourceFocusName = "web") -> str:
-    """GPT-5.4 - OpenAI's latest model."""
+    """GPT-5.4 — OpenAI's latest model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GPT_54, source_focus)
 
 
 @mcp.tool
 def pplx_gpt54_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """GPT-5.4 Thinking - OpenAI's latest model with extended thinking."""
+    """GPT-5.4 Thinking — OpenAI's latest model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GPT_54_THINKING, source_focus)
 
 
 @mcp.tool
 def pplx_gpt52(query: str, source_focus: SourceFocusName = "web") -> str:
-    """GPT-5.2 - OpenAI's model."""
+    """GPT-5.2 — OpenAI's model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GPT_52, source_focus)
 
 
 @mcp.tool
 def pplx_gpt52_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """GPT-5.2 Thinking - OpenAI's model with extended thinking."""
+    """GPT-5.2 Thinking — OpenAI's model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GPT_52_THINKING, source_focus)
 
 
 @mcp.tool
 def pplx_claude_sonnet(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Claude Sonnet 4.6 - Anthropic's fast model."""
+    """Claude Sonnet 4.6 — Anthropic's fast model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.CLAUDE_46_SONNET, source_focus)
 
 
 @mcp.tool
 def pplx_claude_sonnet_think(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Claude Sonnet 4.6 Thinking - Anthropic's fast model with extended thinking."""
+    """Claude Sonnet 4.6 Thinking — Anthropic's fast model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.CLAUDE_46_SONNET_THINKING, source_focus)
 
 
 @mcp.tool
 def pplx_gemini_flash(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Gemini 3 Flash - Google's fast model."""
+    """Gemini 3 Flash — Google's fast model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GEMINI_3_FLASH, source_focus)
 
 
 @mcp.tool
 def pplx_gemini_flash_think(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Gemini 3 Flash Thinking - Google's fast model with extended thinking."""
+    """Gemini 3 Flash Thinking — Google's fast model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GEMINI_3_FLASH_THINKING, source_focus)
 
 
 @mcp.tool
 def pplx_gemini_pro_think(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Gemini 3.1 Pro Thinking - Google's most advanced model with extended thinking."""
+    """Gemini 3.1 Pro Thinking — Google's most advanced model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GEMINI_31_PRO_THINKING, source_focus)
 
 
 @mcp.tool
 def pplx_grok(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Grok 4.1 - xAI's latest model."""
+    """Grok 4.1 — xAI's latest model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GROK_41, source_focus)
 
 
 @mcp.tool
 def pplx_grok_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Grok 4.1 Thinking - xAI's latest model with extended thinking."""
+    """Grok 4.1 Thinking — xAI's latest model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.GROK_41_THINKING, source_focus)
 
 
 @mcp.tool
 def pplx_kimi_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Kimi K2.5 Thinking - Moonshot AI's latest model."""
+    """Kimi K2.5 Thinking — Moonshot AI's latest model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.KIMI_K25_THINKING, source_focus)
 
 
@@ -169,23 +188,24 @@ def pplx_smart_query(
     intent: str = "standard",
     source_focus: SourceFocusName = "web",
 ) -> str:
-    """Quota-aware query — automatically selects the best model based on current limits.
+    """RECOMMENDED DEFAULT TOOL. Quota-aware query — checks limits and picks the best model automatically.
 
-    RECOMMENDED default tool. Checks your remaining Pro Search and Deep Research
-    quotas, then picks the optimal model and search type for your query.
+    USE THIS FOR EVERY QUERY unless the user explicitly requests a specific model.
+    Default to intent='quick' for most lookups — it uses Sonar (FREE, no Pro quota).
+    Only escalate intent when the question genuinely requires it.
 
-    Intent guides the routing:
-    - quick: Simple fact lookup (uses Sonar, no Pro quota consumed)
-    - standard: Normal question (uses Pro Search with auto model)
-    - detailed: Complex analysis (uses premium model like Claude/GPT)
-    - research: Deep dive (uses Deep Research if quota available, else falls back to Pro)
+    Intent guide (choose the LOWEST sufficient level):
+    - quick: Facts, definitions, simple lookups, 'what is X' → FREE (Sonar, no Pro cost)
+    - standard: How-to, comparisons, explanations needing web sources → 1 Pro Search
+    - detailed: Complex multi-source analysis, technical deep-dives → 1 Pro Search (premium model)
+    - research: Comprehensive report → 1 Deep Research (scarce monthly quota, user must request)
 
     Response includes a metadata block showing the model used, routing reason,
     and current quota snapshot.
 
     Args:
         query: The question to ask
-        intent: Query complexity hint — quick, standard, detailed, research
+        intent: Query complexity — quick (default for most), standard, detailed, research
         source_focus: Source type — none (model only, no search), web, academic,
                       social, finance, all
     """
@@ -202,11 +222,9 @@ def pplx_smart_query(
 def pplx_usage(refresh: bool = False) -> str:
     """Check current Perplexity usage limits and remaining quotas.
 
-    Shows remaining Pro Search, Deep Research, Create Files & Apps, and Browser
-    Agent queries. Also shows subscription info and file/upload limits.
-
-    Call this before heavy use to plan queries, or after getting rate limit
-    errors to understand what's left.
+    CALL THIS AT THE START OF EVERY SESSION before making any queries.
+    Shows remaining Pro Search (weekly), Deep Research (monthly), and other quotas.
+    Use the results to decide whether to conserve Pro quota by using quick/Sonar queries.
 
     Args:
         refresh: Force refresh from Perplexity (ignores cache). Default False.

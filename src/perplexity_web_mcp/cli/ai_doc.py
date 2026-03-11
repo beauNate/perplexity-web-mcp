@@ -132,34 +132,36 @@ MCP examples:
 MCP TOOLS (21 total, pplx_* namespace)
 ================================================================================
 
-SMART ROUTING (1):
-  pplx_smart_query(query, intent="standard", source_focus="web")
-      RECOMMENDED default tool. Checks remaining quotas, selects best
-      model/search type. Intents: quick, standard, detailed, research.
+SMART QUERY (RECOMMENDED DEFAULT — use this for every query):
+  pplx_smart_query(query, intent="quick", source_focus="web")
+      Quota-aware routing. Default to intent='quick' for most lookups (FREE).
+      Only escalate to 'standard', 'detailed', or 'research' when needed.
+      See QUOTA-AWARE QUERYING section above for decision rules.
 
-QUERY TOOLS (16):
+QUERY TOOLS (each call costs 1 Pro Search query unless noted):
   pplx_query(query, model="auto", thinking=False, source_focus="web")
-      Flexible: pick any model + thinking toggle.
+      Explicit model selection. 1 PRO SEARCH per call.
 
   pplx_ask(query, source_focus="web")
-      Quick Q&A with auto-selected best model.
+      Auto-selects best model. 1 PRO SEARCH per call.
 
   pplx_deep_research(query, source_focus="web")
-      In-depth research report. Uses monthly Deep Research quota.
+      In-depth research. 1 DEEP RESEARCH per call (scarce monthly quota).
+      ONLY use when user explicitly requests deep research.
 
-  pplx_sonar(query, source_focus="web")         Perplexity Sonar model
-  pplx_gpt54(query, source_focus="web")          GPT-5.4
-  pplx_gpt54_thinking(query, source_focus="web") GPT-5.4 + thinking
-  pplx_gpt52(query, source_focus="web")          GPT-5.2
-  pplx_gpt52_thinking(query, source_focus="web") GPT-5.2 + thinking
-  pplx_claude_sonnet(query, source_focus="web")   Claude 4.6 Sonnet
-  pplx_claude_sonnet_think(query, source_focus)   Claude 4.6 Sonnet + thinking
-  pplx_gemini_flash(query, source_focus="web")    Gemini 3 Flash
-  pplx_gemini_flash_think(query, source_focus)    Gemini 3 Flash + thinking
-  pplx_gemini_pro_think(query, source_focus)      Gemini 3.1 Pro (thinking always on)
-  pplx_grok(query, source_focus="web")            Grok 4.1
-  pplx_grok_thinking(query, source_focus="web")   Grok 4.1 + thinking
-  pplx_kimi_thinking(query, source_focus="web")   Kimi K2.5 (thinking always on)
+  pplx_sonar(query, source_focus="web")         Perplexity Sonar — FREE
+  pplx_gpt54(query, source_focus="web")          GPT-5.4 — 1 Pro
+  pplx_gpt54_thinking(query, source_focus="web") GPT-5.4 + thinking — 1 Pro
+  pplx_gpt52(query, source_focus="web")          GPT-5.2 — 1 Pro
+  pplx_gpt52_thinking(query, source_focus="web") GPT-5.2 + thinking — 1 Pro
+  pplx_claude_sonnet(query, source_focus="web")   Claude 4.6 Sonnet — 1 Pro
+  pplx_claude_sonnet_think(query, source_focus)   Claude 4.6 Sonnet + thinking — 1 Pro
+  pplx_gemini_flash(query, source_focus="web")    Gemini 3 Flash — 1 Pro
+  pplx_gemini_flash_think(query, source_focus)    Gemini 3 Flash + thinking — 1 Pro
+  pplx_gemini_pro_think(query, source_focus)      Gemini 3.1 Pro (thinking) — 1 Pro
+  pplx_grok(query, source_focus="web")            Grok 4.1 — 1 Pro
+  pplx_grok_thinking(query, source_focus="web")   Grok 4.1 + thinking — 1 Pro
+  pplx_kimi_thinking(query, source_focus="web")   Kimi K2.5 (thinking) — 1 Pro
 
   All query tools accept source_focus: "none", "web", "academic", "social",
   "finance", "all". Use "none" for model-only queries without web search.
@@ -167,7 +169,7 @@ QUERY TOOLS (16):
 USAGE TOOL (1):
   pplx_usage(refresh=False)
       Returns remaining Pro Search, Deep Research, Labs, and Agent quotas.
-      Call before heavy use or after rate limit errors.
+      CALL THIS AT SESSION START before making any queries.
 
 AUTH TOOLS (3):
   pplx_auth_status()
@@ -222,6 +224,40 @@ MCP SERVER (pwm-mcp)
   Config: {"mcpServers": {"perplexity": {"command": "pwm-mcp"}}}
 
 ================================================================================
+QUOTA-AWARE QUERYING (READ THIS FIRST)
+================================================================================
+
+Perplexity has hard quota limits. Every Pro Search query consumes from a
+weekly pool (~300). Deep Research draws from a tiny monthly pool (~5-10).
+Wasting Pro queries on simple lookups means nothing left for real questions.
+
+COST MODEL:
+  Sonar / quick intent    FREE — no quota consumed       Unlimited
+  Pro Search (standard,   1 Pro Search query              ~300/week
+    detailed, pplx_ask,
+    pplx_query, all
+    model-specific tools)
+  Deep Research           1 Deep Research query           ~5-10/month
+
+MANDATORY PROTOCOL:
+  1. CHECK QUOTA FIRST: Call pplx_usage() before your first query each session.
+  2. DEFAULT TO QUICK: Use pplx_smart_query(intent='quick') for most lookups.
+     It uses Sonar (FREE) and only upgrades when the query genuinely needs Pro.
+  3. ESCALATE ONLY WHEN NEEDED: Use 'standard' for multi-source synthesis,
+     'detailed' for complex analysis, 'research' only when user requests it.
+  4. NEVER USE DEEP RESEARCH AUTONOMOUSLY — always ask the user first.
+
+WHEN TO USE EACH INTENT:
+  quick     Facts, definitions, simple lookups, "what is X"      → FREE
+  standard  Multi-source synthesis, comparisons, current events   → 1 Pro
+  detailed  Complex analysis, deep reasoning, premium model       → 1 Pro
+  research  Comprehensive reports (user must request explicitly)  → 1 Research
+
+DECISION RULE: Ask "Can Sonar answer this?" If yes → quick. If no → standard.
+Only use detailed/research when the complexity genuinely demands it.
+When in doubt, start with quick and escalate if the answer is insufficient.
+
+================================================================================
 RATE LIMITS
 ================================================================================
 
@@ -232,6 +268,7 @@ Pro     Weekly pool   Monthly pool     Monthly pool
 Max     Weekly pool   Monthly pool     Monthly pool
 
 The MCP server auto-checks limits before each query and blocks if exhausted.
+Every non-smart query response includes a quota footer showing remaining limits.
 Check manually: pwm usage  OR  pplx_usage()
 
 ================================================================================
