@@ -84,7 +84,7 @@ class TestCmdAsk:
         assert "requires a query" in capsys.readouterr().err
 
     def test_flag_as_first_arg_returns_1(self, capsys: pytest.CaptureFixture) -> None:
-        code = _cmd_ask(["--model", "gpt52"])
+        code = _cmd_ask(["--model", "gpt54"])
         assert code == 1
         assert "requires a query" in capsys.readouterr().err
 
@@ -128,8 +128,8 @@ class TestCmdAsk:
         self, mock_resolve: MagicMock, mock_ask: MagicMock
     ) -> None:
         mock_resolve.return_value = MagicMock()
-        _cmd_ask(["query", "-m", "gpt52", "-t"])
-        mock_resolve.assert_called_once_with("gpt52", thinking=True)
+        _cmd_ask(["query", "-m", "gpt54", "-t"])
+        mock_resolve.assert_called_once_with("gpt54", thinking=True)
 
     @patch("perplexity_web_mcp.cli.main.ask", return_value="response")
     def test_source_flag(self, mock_ask: MagicMock) -> None:

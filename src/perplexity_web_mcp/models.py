@@ -28,20 +28,8 @@ class Models:
     SONAR = Model(identifier="experimental")
     """Sonar - Perplexity's latest model."""
 
-    GEMINI_3_FLASH = Model(identifier="gemini30flash")
-    """Gemini 3 Flash - Google's fast model."""
-
-    GEMINI_3_FLASH_THINKING = Model(identifier="gemini30flash_high")
-    """Gemini 3 Flash Thinking - Google's fast model (thinking)."""
-
     GEMINI_31_PRO_THINKING = Model(identifier="gemini31pro_high")
     """Gemini 3.1 Pro Thinking - Google's most advanced model (thinking)."""
-
-    GPT_52 = Model(identifier="gpt52")
-    """GPT-5.2 - OpenAI's model."""
-
-    GPT_52_THINKING = Model(identifier="gpt52_thinking")
-    """GPT-5.2 Thinking - OpenAI's model (thinking)."""
 
     GPT_54 = Model(identifier="gpt54")
     """GPT-5.4 - OpenAI's latest model."""
@@ -61,11 +49,6 @@ class Models:
     CLAUDE_46_OPUS_THINKING = Model(identifier="claude46opusthinking")
     """Claude Opus 4.6 Thinking - Anthropic's most advanced reasoning model (thinking)."""
 
-    GROK_41 = Model(identifier="grok41nonreasoning")
-    """Grok 4.1 - xAI's latest model."""
+    NEMOTRON_3_SUPER = Model(identifier="nv_nemotron_3_super")
+    """Nemotron 3 Super - NVIDIA's Nemotron 3 Super 120B model (thinking)."""
 
-    GROK_41_THINKING = Model(identifier="grok41reasoning")
-    """Grok 4.1 Thinking - xAI's latest model (thinking)."""
-
-    KIMI_K25_THINKING = Model(identifier="kimik25thinking")
-    """Kimi K2.5 Thinking - Moonshot AI's latest model."""

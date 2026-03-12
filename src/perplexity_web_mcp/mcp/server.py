@@ -81,10 +81,10 @@ def pplx_query(
 
     Args:
         query: The question to ask
-        model: Model to use - auto, sonar, deep_research, gpt54, gpt52,
-               claude_sonnet, claude_opus, gemini_flash, gemini_pro, grok, kimi
-        thinking: Enable extended thinking mode (available for gpt52, claude_sonnet,
-                  claude_opus, gemini_flash, grok)
+        model: Model to use - auto, sonar, deep_research, gpt54,
+               claude_sonnet, claude_opus, gemini_pro, nemotron
+        thinking: Enable extended thinking mode (available for gpt54, claude_sonnet,
+                  claude_opus; always on for gemini_pro and nemotron)
         source_focus: Source type - none (model only, no search), web, academic,
                       social, finance, all
     """
@@ -123,18 +123,6 @@ def pplx_gpt54_thinking(query: str, source_focus: SourceFocusName = "web") -> st
 
 
 @mcp.tool
-def pplx_gpt52(query: str, source_focus: SourceFocusName = "web") -> str:
-    """GPT-5.2 — OpenAI's model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GPT_52, source_focus)
-
-
-@mcp.tool
-def pplx_gpt52_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """GPT-5.2 Thinking — OpenAI's model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GPT_52_THINKING, source_focus)
-
-
-@mcp.tool
 def pplx_claude_sonnet(query: str, source_focus: SourceFocusName = "web") -> str:
     """Claude Sonnet 4.6 — Anthropic's fast model. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.CLAUDE_46_SONNET, source_focus)
@@ -147,15 +135,15 @@ def pplx_claude_sonnet_think(query: str, source_focus: SourceFocusName = "web") 
 
 
 @mcp.tool
-def pplx_gemini_flash(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Gemini 3 Flash — Google's fast model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GEMINI_3_FLASH, source_focus)
+def pplx_claude_opus(query: str, source_focus: SourceFocusName = "web") -> str:
+    """Claude Opus 4.6 — Anthropic's most advanced reasoning model. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
+    return ask(query, Models.CLAUDE_46_OPUS, source_focus)
 
 
 @mcp.tool
-def pplx_gemini_flash_think(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Gemini 3 Flash Thinking — Google's fast model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GEMINI_3_FLASH_THINKING, source_focus)
+def pplx_claude_opus_think(query: str, source_focus: SourceFocusName = "web") -> str:
+    """Claude Opus 4.6 Thinking — Anthropic's most advanced reasoning model with extended thinking. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
+    return ask(query, Models.CLAUDE_46_OPUS_THINKING, source_focus)
 
 
 @mcp.tool
@@ -165,21 +153,9 @@ def pplx_gemini_pro_think(query: str, source_focus: SourceFocusName = "web") -> 
 
 
 @mcp.tool
-def pplx_grok(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Grok 4.1 — xAI's latest model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GROK_41, source_focus)
-
-
-@mcp.tool
-def pplx_grok_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Grok 4.1 Thinking — xAI's latest model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GROK_41_THINKING, source_focus)
-
-
-@mcp.tool
-def pplx_kimi_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Kimi K2.5 Thinking — Moonshot AI's latest model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.KIMI_K25_THINKING, source_focus)
+def pplx_nemotron_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
+    """Nemotron 3 Super — NVIDIA's Nemotron 3 Super 120B model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
+    return ask(query, Models.NEMOTRON_3_SUPER, source_focus)
 
 
 @mcp.tool

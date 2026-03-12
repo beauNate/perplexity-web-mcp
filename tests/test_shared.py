@@ -30,8 +30,8 @@ class TestMappings:
     """Verify the shared mapping dictionaries are well-formed."""
 
     def test_model_map_has_all_expected_keys(self) -> None:
-        expected = {"auto", "sonar", "deep_research", "gpt54", "gpt52", "claude_sonnet",
-                    "claude_opus", "gemini_flash", "gemini_pro", "grok", "kimi"}
+        expected = {"auto", "sonar", "deep_research", "gpt54", "claude_sonnet",
+                    "claude_opus", "gemini_pro", "nemotron"}
         assert set(MODEL_MAP.keys()) == expected
 
     def test_model_names_matches_map_keys(self) -> None:
@@ -74,11 +74,11 @@ class TestResolveModel:
         # auto has no thinking variant (None)
         assert resolve_model("auto", thinking=True) is Models.BEST
 
-    def test_gpt52_base(self) -> None:
-        assert resolve_model("gpt52") is Models.GPT_52
+    def test_nemotron_base(self) -> None:
+        assert resolve_model("nemotron") is Models.NEMOTRON_3_SUPER
 
-    def test_gpt52_thinking(self) -> None:
-        assert resolve_model("gpt52", thinking=True) is Models.GPT_52_THINKING
+    def test_nemotron_thinking(self) -> None:
+        assert resolve_model("nemotron", thinking=True) is Models.NEMOTRON_3_SUPER
 
     def test_claude_sonnet_base(self) -> None:
         assert resolve_model("claude_sonnet") is Models.CLAUDE_46_SONNET
@@ -91,9 +91,10 @@ class TestResolveModel:
         assert resolve_model("gemini_pro") is Models.GEMINI_31_PRO_THINKING
         assert resolve_model("gemini_pro", thinking=True) is Models.GEMINI_31_PRO_THINKING
 
-    def test_kimi_always_thinking(self) -> None:
-        assert resolve_model("kimi") is Models.KIMI_K25_THINKING
-        assert resolve_model("kimi", thinking=True) is Models.KIMI_K25_THINKING
+    def test_nemotron_always_thinking(self) -> None:
+        # nemotron is reasoning-only, always thinking
+        assert resolve_model("nemotron") is Models.NEMOTRON_3_SUPER
+        assert resolve_model("nemotron", thinking=True) is Models.NEMOTRON_3_SUPER
 
     def test_unknown_model_falls_back_to_best(self) -> None:
         assert resolve_model("nonexistent") is Models.BEST

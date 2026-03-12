@@ -4,6 +4,32 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.9.1] - 2026-03-11
+
+### Added
+
+- **NVIDIA Nemotron 3 Super model** — NVIDIA's Nemotron 3 Super 120B added. Identifier: `nv_nemotron_3_super`. Reasoning-only model with thinking permanently enabled.
+  - `pplx_nemotron_thinking` MCP tool.
+  - API server aliases: `nemotron-3-super`, `nemotron`.
+  - CLI: `pwm ask "query" -m nemotron`.
+- **Model change detection workflow** — `scripts/detect_model_changes.py` for automated detection of Perplexity model changes. Supports `--from-browser` and `--from-file` for Cloudflare-blocked environments. Reference snapshot at `scripts/reference_model_config.json`.
+- `.agents/workflows/model-update.md` — Step-by-step workflow for detecting and applying model changes.
+
+### Removed
+
+- **GPT-5.2** — Removed from Perplexity UI. `pplx_gpt52` and `pplx_gpt52_thinking` MCP tools removed.
+- **Gemini 3 Flash** — Removed from Perplexity UI. `pplx_gemini_flash` and `pplx_gemini_flash_think` MCP tools removed.
+- **Grok 4.1** — Removed from Perplexity UI. `pplx_grok` and `pplx_grok_thinking` MCP tools removed.
+- **Kimi K2.5** — Removed from Perplexity UI. `pplx_kimi_thinking` MCP tool removed.
+
+### Changed
+
+- MCP tool count reduced from 21 to 16 (removed 7 tools for deprecated models, added 1 for Nemotron).
+- All documentation surfaces updated: SKILL.md, `pwm --ai`, CLAUDE.md, reference docs.
+- Skill metadata version bumped to 0.9.1.
+
+---
+
 ## [0.9.0] - 2026-03-11
 
 ### Added

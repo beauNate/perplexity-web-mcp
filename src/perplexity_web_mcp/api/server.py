@@ -21,7 +21,7 @@ Claude Code Integration:
   
   Then run Claude Code with any supported model:
     claude --model claude-sonnet-4-6      # Use Claude 4.6 Sonnet via Perplexity
-    claude --model gpt-5.2                # Use GPT-5.2 via Perplexity
+    claude --model gpt-5.4                # Use GPT-5.4 via Perplexity
     claude --model perplexity-auto        # Use Perplexity's auto model selection
     claude --model claude-3-5-sonnet      # Legacy name, maps to Claude 4.6 Sonnet
 """
@@ -102,7 +102,7 @@ class ServerConfig:
 
 # Map model names to Perplexity models
 # Supports Anthropic, OpenAI, and standard Claude Code model naming conventions
-# Updated Feb 2026 to match Perplexity UI offerings
+# Updated Mar 2026 to match Perplexity UI offerings
 MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     # ==========================================================================
     # Perplexity Native Models
@@ -155,62 +155,40 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "gpt-5-4": (Models.GPT_54, Models.GPT_54_THINKING),
     "gpt-54": (Models.GPT_54, Models.GPT_54_THINKING),
     "gpt54": (Models.GPT_54, Models.GPT_54_THINKING),
-    "gpt-5.2": (Models.GPT_52, Models.GPT_52_THINKING),
-    "gpt-5-2": (Models.GPT_52, Models.GPT_52_THINKING),
-    "gpt-52": (Models.GPT_52, Models.GPT_52_THINKING),
-    "gpt52": (Models.GPT_52, Models.GPT_52_THINKING),
     
     # ==========================================================================
-    # Google Gemini 3 Models (via Perplexity)
-    # - Gemini 3 Flash: has thinking toggle (on/off)
-    # - Gemini 3 Pro: thinking ALWAYS enabled (no toggle in UI)
+    # Google Gemini Models (via Perplexity)
+    # Gemini 3.1 Pro: thinking ALWAYS enabled (no toggle in UI)
     # ==========================================================================
-    "gemini-3-flash": (Models.GEMINI_3_FLASH, Models.GEMINI_3_FLASH_THINKING),
-    "gemini-3.0-flash": (Models.GEMINI_3_FLASH, Models.GEMINI_3_FLASH_THINKING),
-    "gemini-flash": (Models.GEMINI_3_FLASH, Models.GEMINI_3_FLASH_THINKING),
-    # Gemini 3.1 Pro - thinking only, no non-thinking variant available
     "gemini-3.1-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "gemini-3-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "gemini-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     
     # ==========================================================================
-    # xAI Grok 4.1 (via Perplexity) - supports thinking toggle
+    # NVIDIA Nemotron 3 Super (via Perplexity)
+    # Thinking ALWAYS enabled (no toggle in UI) - reasoning only
     # ==========================================================================
-    "grok-4.1": (Models.GROK_41, Models.GROK_41_THINKING),
-    "grok-4-1": (Models.GROK_41, Models.GROK_41_THINKING),
-    "grok-41": (Models.GROK_41, Models.GROK_41_THINKING),
-    "grok": (Models.GROK_41, Models.GROK_41_THINKING),
-    
-    # ==========================================================================
-    # Moonshot Kimi K2.5 (via Perplexity)
-    # Thinking ALWAYS enabled (no toggle in UI) - only thinking variant available
-    # ==========================================================================
-    "kimi-k2.5": (Models.KIMI_K25_THINKING, Models.KIMI_K25_THINKING),
-    "kimi-k2-5": (Models.KIMI_K25_THINKING, Models.KIMI_K25_THINKING),
-    "kimi-k25": (Models.KIMI_K25_THINKING, Models.KIMI_K25_THINKING),
-    "kimi": (Models.KIMI_K25_THINKING, Models.KIMI_K25_THINKING),
+    "nemotron-3-super": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
+    "nemotron-3": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
+    "nemotron": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
 }
 
 # Models we expose via /v1/models
-# Ordered to match Perplexity UI (Feb 2026)
+# Ordered to match Perplexity UI (Mar 2026)
 AVAILABLE_MODELS = [
     # Perplexity Native
     {"id": "perplexity-auto", "description": "Best - Automatically selects optimal model"},
     {"id": "perplexity-sonar", "description": "Sonar - Perplexity's latest model"},
     {"id": "perplexity-research", "description": "Deep Research - In-depth reports with sources"},
     # Google Gemini
-    {"id": "gemini-3-flash", "description": "Gemini 3 Flash - Fast, thinking toggle available"},
     {"id": "gemini-3.1-pro", "description": "Gemini 3.1 Pro - Advanced, thinking always on"},
     # OpenAI
     {"id": "gpt-5.4", "description": "GPT-5.4 - OpenAI's latest, thinking toggle available"},
-    {"id": "gpt-5.2", "description": "GPT-5.2 - OpenAI's model, thinking toggle available"},
     # Anthropic Claude
     {"id": "claude-sonnet-4-6", "description": "Claude Sonnet 4.6 - Fast, thinking toggle available"},
     {"id": "claude-opus-4-6", "description": "Claude Opus 4.6 - Advanced reasoning, Max tier required"},
-    # xAI
-    {"id": "grok-4.1", "description": "Grok 4.1 - xAI's latest, thinking toggle available"},
-    # Moonshot
-    {"id": "kimi-k2.5", "description": "Kimi K2.5 - Moonshot AI multimodal, thinking always on"},
+    # NVIDIA
+    {"id": "nemotron-3-super", "description": "Nemotron 3 Super - NVIDIA 120B, thinking always on"},
 ]
 
 

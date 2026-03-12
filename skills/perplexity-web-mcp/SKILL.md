@@ -5,10 +5,10 @@ description: >-
   Supports CLI commands (pwm ask, pwm research), MCP tools (pplx_*), and
   Anthropic/OpenAI-compatible API server. Use when the user mentions "perplexity",
   "pplx", "pwm", "web search with AI", "deep research", "search the internet",
-  or wants to query premium models like GPT-5.4, GPT-5.2, Claude, Gemini, Grok through
+  or wants to query premium models like GPT-5.4, Claude, Gemini, Nemotron through
   Perplexity's web interface.
 metadata:
-  version: "0.8.2"
+  version: "0.9.1"
   author: "Jacob BD"
 ---
 
@@ -193,12 +193,10 @@ pwm usage --refresh         # Force-refresh from server
 | `pplx_deep_research` | In-depth reports (monthly quota) |
 | `pplx_sonar` | Perplexity Sonar model |
 | `pplx_gpt54` / `_thinking` | OpenAI GPT-5.4 |
-| `pplx_gpt52` / `_thinking` | OpenAI GPT-5.2 |
 | `pplx_claude_sonnet` / `_think` | Anthropic Claude 4.6 Sonnet |
-| `pplx_gemini_flash` / `_think` | Google Gemini 3 Flash |
+| `pplx_claude_opus` / `_think` | Anthropic Claude 4.6 Opus |
 | `pplx_gemini_pro_think` | Google Gemini 3.1 Pro (thinking always on) |
-| `pplx_grok` / `_thinking` | xAI Grok 4.1 |
-| `pplx_kimi_thinking` | Moonshot Kimi K2.5 (thinking always on) |
+| `pplx_nemotron_thinking` | NVIDIA Nemotron 3 Super (thinking always on) |
 | `pplx_usage` | Check remaining quotas |
 | `pplx_auth_status` | Check auth status |
 | `pplx_auth_request_code` | Send verification code |
@@ -217,13 +215,10 @@ For full MCP tool parameters: See [references/mcp-tools.md](references/mcp-tools
 | sonar | Perplexity | No | Latest Perplexity model |
 | deep_research | Perplexity | No | Monthly quota |
 | gpt54 | OpenAI | Toggle | GPT-5.4 |
-| gpt52 | OpenAI | Toggle | GPT-5.2 |
 | claude_sonnet | Anthropic | Toggle | Claude 4.6 Sonnet |
 | claude_opus | Anthropic | Toggle | Claude 4.6 Opus (Max tier) |
-| gemini_flash | Google | Toggle | Gemini 3 Flash |
 | gemini_pro | Google | Always | Gemini 3.1 Pro |
-| grok | xAI | Toggle | Grok 4.1 |
-| kimi | Moonshot | Always | Kimi K2.5 |
+| nemotron | NVIDIA | Always | Nemotron 3 Super 120B |
 
 For full model details: See [references/models.md](references/models.md)
 

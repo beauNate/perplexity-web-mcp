@@ -14,7 +14,7 @@ PERPLEXITY WEB MCP - AI REFERENCE
 
 Perplexity Web MCP provides three interfaces to Perplexity AI:
   1. CLI (pwm)         - Direct terminal queries and authentication
-  2. MCP Server        - 21 MCP tools for AI agents (pplx_* namespace)
+  2. MCP Server        - 16 MCP tools for AI agents (pplx_* namespace)
   3. API Server        - Anthropic/OpenAI-compatible HTTP endpoints
 
 All three share the same backend, models, and authentication token stored at
@@ -40,7 +40,7 @@ QUERYING
   pwm ask "query" --no-citations      Suppress citation URLs
 
   Model selection examples (-m):
-    pwm ask "Compare React and Vue" -m gpt52
+    pwm ask "Compare React and Vue" -m gpt54
     pwm ask "Explain attention mechanism" -m claude_sonnet
     pwm ask "Prove sqrt(2) is irrational" -m claude_sonnet --thinking
     pwm ask "Summarize this paper" -m gemini_pro
@@ -71,7 +71,7 @@ USAGE & LIMITS
 
 HACK (INTEGRATION)
   pwm hack claude                     Launch Claude Code using Perplexity models
-  pwm hack claude -m gpt52            Launch Claude Code with a specific model
+  pwm hack claude -m gpt54            Launch Claude Code with a specific model
   pwm hack claude --help              List all available models for Claude Code
 
 OTHER
@@ -89,19 +89,16 @@ auto            pplx_pro                No         Auto-selects best model
 sonar           experimental            No         Perplexity's latest
 deep_research   pplx_alpha              No         In-depth reports (monthly quota)
 gpt54           gpt54                   Yes        OpenAI GPT-5.4
-gpt52           gpt52                   Yes        OpenAI GPT-5.2
 claude_sonnet   claude46sonnet          Yes        Anthropic Claude 4.6 Sonnet
 claude_opus     claude46opus            Yes        Anthropic Claude 4.6 Opus (Max tier)
-gemini_flash    gemini30flash           Yes        Google Gemini 3 Flash
 gemini_pro      gemini31pro_high        Always     Google Gemini 3.1 Pro (thinking only)
-grok            grok41nonreasoning      Yes        xAI Grok 4.1
-kimi            kimik25thinking         Always     Moonshot Kimi K2.5 (thinking only)
+nemotron        nv_nemotron_3_super     Always     NVIDIA Nemotron 3 Super 120B (thinking only)
 
 "Thinking" = extended reasoning mode. Models marked "Always" have thinking
 permanently enabled with no non-thinking variant.
 
-Use with CLI: pwm ask "query" -m gpt52 -t
-Use with MCP: pplx_query(query="...", model="gpt52", thinking=True)
+Use with CLI: pwm ask "query" -m gpt54 -t
+Use with MCP: pplx_query(query="...", model="gpt54", thinking=True)
 
 ================================================================================
 SOURCE FOCUS OPTIONS
@@ -126,10 +123,10 @@ CLI examples:
 MCP examples:
   pplx_ask(query="review this code", source_focus="none")
   pplx_ask(query="transformer architecture", source_focus="academic")
-  pplx_query(query="Tesla financials", model="gpt52", source_focus="finance")
+  pplx_query(query="Tesla financials", model="gpt54", source_focus="finance")
 
 ================================================================================
-MCP TOOLS (21 total, pplx_* namespace)
+MCP TOOLS (16 total, pplx_* namespace)
 ================================================================================
 
 SMART QUERY (RECOMMENDED DEFAULT — use this for every query):
@@ -152,16 +149,12 @@ QUERY TOOLS (each call costs 1 Pro Search query unless noted):
   pplx_sonar(query, source_focus="web")         Perplexity Sonar — FREE
   pplx_gpt54(query, source_focus="web")          GPT-5.4 — 1 Pro
   pplx_gpt54_thinking(query, source_focus="web") GPT-5.4 + thinking — 1 Pro
-  pplx_gpt52(query, source_focus="web")          GPT-5.2 — 1 Pro
-  pplx_gpt52_thinking(query, source_focus="web") GPT-5.2 + thinking — 1 Pro
   pplx_claude_sonnet(query, source_focus="web")   Claude 4.6 Sonnet — 1 Pro
   pplx_claude_sonnet_think(query, source_focus)   Claude 4.6 Sonnet + thinking — 1 Pro
-  pplx_gemini_flash(query, source_focus="web")    Gemini 3 Flash — 1 Pro
-  pplx_gemini_flash_think(query, source_focus)    Gemini 3 Flash + thinking — 1 Pro
+  pplx_claude_opus(query, source_focus="web")     Claude 4.6 Opus — 1 Pro (Max tier)
+  pplx_claude_opus_think(query, source_focus)     Claude 4.6 Opus + thinking — 1 Pro (Max tier)
   pplx_gemini_pro_think(query, source_focus)      Gemini 3.1 Pro (thinking) — 1 Pro
-  pplx_grok(query, source_focus="web")            Grok 4.1 — 1 Pro
-  pplx_grok_thinking(query, source_focus="web")   Grok 4.1 + thinking — 1 Pro
-  pplx_kimi_thinking(query, source_focus="web")   Kimi K2.5 (thinking) — 1 Pro
+  pplx_nemotron_thinking(query, source_focus)     Nemotron 3 Super (thinking) — 1 Pro
 
   All query tools accept source_focus: "none", "web", "academic", "social",
   "finance", "all". Use "none" for model-only queries without web search.
@@ -217,7 +210,7 @@ Endpoints:
 Claude Code setup:
   export ANTHROPIC_BASE_URL=http://localhost:8080
   export ANTHROPIC_API_KEY=perplexity
-  claude --model gpt-5.2
+  claude --model gpt-5.4
 
 MCP SERVER (pwm-mcp)
   Start: pwm-mcp
@@ -295,7 +288,7 @@ Model-only query (no web search):
   pwm ask "Write a retry decorator" -m claude_sonnet -s none
 
 Specific model:
-  pwm ask "Compare React and Vue" -m gpt52
+  pwm ask "Compare React and Vue" -m gpt54
 
 Model with thinking:
   pwm ask "Prove sqrt(2) is irrational" -m claude_sonnet -t

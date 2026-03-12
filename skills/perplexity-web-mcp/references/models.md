@@ -31,12 +31,6 @@ Complete list of models available through Perplexity Web MCP.
 - **CLI:** `pwm ask "query" -m gpt54` or `pwm ask "query" -m gpt54 -t`
 - **MCP:** `pplx_gpt54(query)` or `pplx_gpt54_thinking(query)`
 
-### gpt52 (OpenAI's model)
-- **Identifier:** `gpt52` / `gpt52_thinking`
-- **Thinking:** Toggle (use `-t` flag or `thinking=True`)
-- **CLI:** `pwm ask "query" -m gpt52` or `pwm ask "query" -m gpt52 -t`
-- **MCP:** `pplx_gpt52(query)` or `pplx_gpt52_thinking(query)`
-
 ### claude_sonnet (Anthropic Claude 4.6 Sonnet)
 - **Identifier:** `claude46sonnet` / `claude46sonnetthinking`
 - **Thinking:** Toggle
@@ -47,14 +41,8 @@ Complete list of models available through Perplexity Web MCP.
 - **Identifier:** `claude46opus` / `claude46opusthinking`
 - **Thinking:** Toggle
 - **CLI:** `pwm ask "query" -m claude_opus` or `pwm ask "query" -m claude_opus -t`
-- **MCP:** `pplx_query(query, model="claude_opus")` or `pplx_query(query, model="claude_opus", thinking=True)`
+- **MCP:** `pplx_claude_opus(query)` or `pplx_claude_opus_think(query)`
 - **Notes:** Requires Perplexity **Max** subscription tier ($200/mo).
-
-### gemini_flash (Google Gemini 3 Flash)
-- **Identifier:** `gemini30flash` / `gemini30flash_high`
-- **Thinking:** Toggle
-- **CLI:** `pwm ask "query" -m gemini_flash` or `pwm ask "query" -m gemini_flash -t`
-- **MCP:** `pplx_gemini_flash(query)` or `pplx_gemini_flash_think(query)`
 
 ### gemini_pro (Google Gemini 3.1 Pro)
 - **Identifier:** `gemini31pro_high`
@@ -63,18 +51,12 @@ Complete list of models available through Perplexity Web MCP.
 - **MCP:** `pplx_gemini_pro_think(query)` or `pplx_query(query, model="gemini_pro")`
 - **Notes:** Thinking is permanently enabled. The `-t` flag has no effect.
 
-### grok (xAI Grok 4.1)
-- **Identifier:** `grok41nonreasoning` / `grok41reasoning`
-- **Thinking:** Toggle
-- **CLI:** `pwm ask "query" -m grok` or `pwm ask "query" -m grok -t`
-- **MCP:** `pplx_grok(query)` or `pplx_grok_thinking(query)`
-
-### kimi (Moonshot Kimi K2.5)
-- **Identifier:** `kimik25thinking`
+### nemotron (NVIDIA Nemotron 3 Super)
+- **Identifier:** `nv_nemotron_3_super`
 - **Thinking:** Always on (no non-thinking variant)
-- **CLI:** `pwm ask "query" -m kimi`
-- **MCP:** `pplx_kimi_thinking(query)` or `pplx_query(query, model="kimi")`
-- **Notes:** Thinking is permanently enabled.
+- **CLI:** `pwm ask "query" -m nemotron`
+- **MCP:** `pplx_nemotron_thinking(query)` or `pplx_query(query, model="nemotron")`
+- **Notes:** NVIDIA's Nemotron 3 Super 120B model. Thinking is permanently enabled.
 
 ## Subscription Tiers
 

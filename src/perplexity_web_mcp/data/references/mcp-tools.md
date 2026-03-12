@@ -41,8 +41,8 @@ Prefer `pplx_smart_query` unless you need a specific model.
 ```
 pplx_query(
     query: str,                    # Required. The question to ask.
-    model: str = "auto",           # auto, sonar, deep_research, gpt54, gpt52, claude_sonnet,
-                                   # claude_opus, gemini_flash, gemini_pro, grok, kimi
+    model: str = "auto",           # auto, sonar, deep_research, gpt54, claude_sonnet,
+                                   # claude_opus, gemini_pro, nemotron
     thinking: bool = False,        # Enable extended thinking (where supported)
     source_focus: str = "web",     # none, web, academic, social, finance, all
 ) -> str
@@ -88,16 +88,12 @@ pplx_<model>(
 | `pplx_sonar` | Perplexity Sonar | No | **FREE** |
 | `pplx_gpt54` | GPT-5.4 | No | 1 Pro |
 | `pplx_gpt54_thinking` | GPT-5.4 | Yes | 1 Pro |
-| `pplx_gpt52` | GPT-5.2 | No | 1 Pro |
-| `pplx_gpt52_thinking` | GPT-5.2 | Yes | 1 Pro |
 | `pplx_claude_sonnet` | Claude 4.6 Sonnet | No | 1 Pro |
 | `pplx_claude_sonnet_think` | Claude 4.6 Sonnet | Yes | 1 Pro |
-| `pplx_gemini_flash` | Gemini 3 Flash | No | 1 Pro |
-| `pplx_gemini_flash_think` | Gemini 3 Flash | Yes | 1 Pro |
+| `pplx_claude_opus` | Claude 4.6 Opus | No | 1 Pro |
+| `pplx_claude_opus_think` | Claude 4.6 Opus | Yes | 1 Pro |
 | `pplx_gemini_pro_think` | Gemini 3.1 Pro | Yes (always) | 1 Pro |
-| `pplx_grok` | Grok 4.1 | No | 1 Pro |
-| `pplx_grok_thinking` | Grok 4.1 | Yes | 1 Pro |
-| `pplx_kimi_thinking` | Kimi K2.5 | Yes (always) | 1 Pro |
+| `pplx_nemotron_thinking` | Nemotron 3 Super | Yes (always) | 1 Pro |
 
 ## Usage Tool
 
