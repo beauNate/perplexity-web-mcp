@@ -191,6 +191,7 @@ def _setup_claude_code() -> bool:
         )
         if result.returncode == 0:
             console.print("[green]✓[/green] Added to Claude Code (user scope)")
+            console.print("  [dim]Verify: claude mcp list[/dim]")
             return True
         elif "already exists" in result.stderr.lower():
             console.print("[green]✓[/green] Already configured in Claude Code")
@@ -235,6 +236,7 @@ def _setup_codex() -> bool:
             )
             if result.returncode == 0:
                 console.print("[green]✓[/green] Added to Codex CLI")
+                console.print("  [dim]Verify: codex mcp list[/dim]")
                 return True
             elif "already exists" in result.stderr.lower():
                 console.print("[green]✓[/green] Already configured in Codex CLI")
