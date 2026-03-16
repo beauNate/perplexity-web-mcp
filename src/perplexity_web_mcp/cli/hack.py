@@ -7,6 +7,7 @@ connected to the local Perplexity API server.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 import shutil
 import socket
 import subprocess
@@ -133,9 +134,23 @@ def _hack_claude(args: list[str]) -> int:
         if "--model" not in claude_args:
             claude_args.extend(["--model", "perplexity-auto"])
 
-        # 6. Execute Claude Code interactively
+        # 6. Guard Claude's settings.json against /model corruption.
+        #    Claude Code persists /model selections (e.g. "gpt54") to
+        #    ~/.claude/settings.json. Those non-Anthropic model names break
+        #    Claude when launched normally. We memorize the original file
+        #    content and restore it after the session ends.
+        settings_path = Path.home() / ".claude" / "settings.json"
+        original_settings = (
+            settings_path.read_bytes() if settings_path.exists() else None
+        )
+
+        # 7. Execute Claude Code interactively
         cmd = [claude_path] + claude_args
-        result = subprocess.run(cmd, env=env)
+        try:
+            result = subprocess.run(cmd, env=env)
+        finally:
+            if original_settings is not None:
+                settings_path.write_bytes(original_settings)
         
         return result.returncode
 

@@ -4,6 +4,21 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.9.5] - 2026-03-16
+
+### Added
+
+- **OpenCode MCP setup** — `pwm setup add opencode` and `pwm setup remove opencode` now configure MCP via OpenCode's custom JSON format (`~/.config/opencode/config.json`).
+- **Verify hints after MCP setup** — `pwm setup add claude-code` and `pwm setup add codex` now show verification commands to confirm the setup worked.
+
+### Fixed
+
+- **`pwm hack claude` settings corruption** — Claude Code's `/model` command persists model selections (e.g. `gpt54`) to `~/.claude/settings.json`, breaking normal Claude launches. The hack session now memorizes the settings file before launch and restores it after exit, crash, or Ctrl+C.
+- **Claude Code setup detection** — `pwm setup add claude-code` now checks both stdout and stderr for the "already exists" message, fixing false re-configuration on some Claude versions.
+- **README model count** — Corrected model count in README.
+
+---
+
 ## [0.9.4] - 2026-03-14
 
 ### Added
