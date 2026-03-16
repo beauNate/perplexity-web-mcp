@@ -13,7 +13,7 @@ Use your Perplexity Pro/Max subscription to access premium models (GPT-5.4, Clau
 - **CLI**: Query Perplexity models directly from the terminal (`pwm ask`, `pwm research`)
 - **MCP Server**: 16 MCP tools for AI agents with citations and rate limit checking
 - **API Server**: Drop-in Anthropic Messages API and OpenAI Chat Completions API
-- **8 Models**: GPT-5.4, Claude 4.6 Opus, Claude 4.6 Sonnet, Gemini 3.1 Pro, Nemotron 3 Super, Sonar
+- **6 Models**: GPT-5.4, Claude 4.6 Opus, Claude 4.6 Sonnet, Gemini 3.1 Pro, Nemotron 3 Super, Sonar
 - **Thinking Mode**: Extended thinking support for all compatible models
 - **Deep Research**: Full support for Perplexity's Deep Research mode
 - **Setup & Skill Management**: Auto-configure MCP for Claude Code, Cursor, Windsurf, Gemini CLI, Codex, Cline, Antigravity; install Agent Skills across 9 platforms
