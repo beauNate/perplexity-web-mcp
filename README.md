@@ -2,6 +2,8 @@
   <img src="assets/logo.png" alt="Perplexity Web MCP" width="700">
 </p>
 
+# Perplexity Web MCP
+
 <p align="center">
   <a href="https://youtu.be/ffyibtyk-LQ">
     <img src="https://img.youtube.com/vi/ffyibtyk-LQ/maxresdefault.jpg" alt="Demo Overview" width="600">
@@ -9,8 +11,6 @@
   <br>
   <sub>▶️ <strong>Watch the Demo Overview</strong></sub>
 </p>
-
-# Perplexity Web MCP
 
 MCP server, CLI, and API-compatible interface for Perplexity AI's web interface.
 
