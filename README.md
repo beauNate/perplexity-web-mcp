@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="Perplexity Web MCP" width="700">
 </p>
 
-# Perplexity Web MCP
+# Perplexity Web MCP & CLI
 
 <p align="center">
   <a href="https://youtu.be/ffyibtyk-LQ">
