@@ -2,7 +2,7 @@
 name: perplexity-web-mcp
 description: "Search the web and query AI models via Perplexity AI using perplexity-web-mcp-cli. Supports CLI commands (pwm ask, pwm research), MCP tools (pplx_*), and Anthropic/OpenAI-compatible API server. Use when the user mentions \"perplexity\", \"pplx\", \"pwm\", \"web search with AI\", \"deep research\", \"search the internet\", or wants to query premium models like GPT-5.4, Claude, Gemini, Nemotron through Perplexity's web interface."
 metadata:
-  version: "0.10.3"
+  version: "0.10.4"
   author: "Jacob BD"
 ---
 
@@ -83,7 +83,7 @@ Ask yourself: **"Can Sonar answer this?"** If yes, use `quick`. Only escalate if
 - The user needs high-confidence answers validated across multiple AI providers
 - Important decisions, fact-checking, or complex analysis
 - BEFORE calling: ASK the user which models and how many (each = 1 Pro Search)
-- Available models: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron
+- Available models: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron, kimi_k26
 - Default: 3 models (GPT-5.4, Claude Opus, Gemini Pro) = 3 Pro Searches
 
 ### Decision Flowchart
@@ -285,9 +285,10 @@ pwm usage --refresh         # Force-refresh from server
 | `pplx_council` | **N Pro** (1 per model) | Model Council — **ASK USER which models first!** Supports `thinking=True`. |
 | `pplx_gpt54` / `_thinking` | 1 Pro | OpenAI GPT-5.4 |
 | `pplx_claude_sonnet` / `_think` | 1 Pro | Anthropic Claude 4.6 Sonnet |
-| `pplx_claude_opus` / `_think` | 1 Pro | Anthropic Claude 4.6 Opus |
+| `pplx_claude_opus` / `_think` | 1 Pro | Anthropic Claude 4.7 Opus |
 | `pplx_gemini_pro_think` | 1 Pro | Google Gemini 3.1 Pro (thinking always on) |
 | `pplx_nemotron_thinking` | 1 Pro | NVIDIA Nemotron 3 Super (thinking always on) |
+| `pplx_kimi_k26` / `_thinking` | 1 Pro | Moonshot Kimi K2.6 |
 | `pplx_deep_research` | 1 Research | In-depth reports (**scarce monthly quota**) |
 | `pplx_usage` | FREE | Check remaining quotas |
 | `pplx_auth_status` | FREE | Check auth status |
@@ -308,9 +309,10 @@ For full MCP tool parameters: See [references/mcp-tools.md](references/mcp-tools
 | deep_research | Perplexity | No | Monthly quota |
 | gpt54 | OpenAI | Toggle | GPT-5.4 |
 | claude_sonnet | Anthropic | Toggle | Claude 4.6 Sonnet |
-| claude_opus | Anthropic | Toggle | Claude 4.6 Opus (Max tier) |
+| claude_opus | Anthropic | Toggle | Claude 4.7 Opus (Max tier) |
 | gemini_pro | Google | Always | Gemini 3.1 Pro |
 | nemotron | NVIDIA | Always | Nemotron 3 Super 120B |
+| kimi_k26 | Moonshot | Toggle | Kimi K2.6 |
 
 For full model details: See [references/models.md](references/models.md)
 
@@ -318,7 +320,7 @@ For full model details: See [references/models.md](references/models.md)
 
 | Option | Description | Example Use Case |
 |--------|-------------|------------------|
-| `none` | No search -- model training data only | Code review, writing, analysis without web |
+| `none` | No search — model training data only. **Note: still costs 1 Pro Search for premium models** | Code review, writing, analysis without web |
 | `web` | General web search (default) | News, general questions |
 | `academic` | Academic papers, journals | Research, citations, scientific topics |
 | `social` | Reddit, Twitter, forums | Opinions, recommendations, community |

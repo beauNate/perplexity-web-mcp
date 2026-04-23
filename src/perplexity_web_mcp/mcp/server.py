@@ -17,12 +17,29 @@ from perplexity_web_mcp.shared import (
     ModelName,
     SourceFocusName,
     ask,
+    council_ask,
     get_limit_cache,
     resolve_model,
     smart_ask,
 )
 from perplexity_web_mcp.token_store import load_token, save_token
 
+
+_COUNCIL_DISPLAY_NAMES: dict[str, str] = {
+    "auto": "Auto (Best)",
+    "sonar": "Sonar",
+    "gpt54": "GPT-5.4",
+    "claude_sonnet": "Claude Sonnet 4.6",
+    "claude_opus": "Claude Opus 4.7",
+    "gemini_pro": "Gemini 3.1 Pro",
+    "nemotron": "Nemotron 3 Super",
+    "kimi_k26": "Kimi K2.6",
+}
+
+_THINKING_TOGGLEABLE: frozenset[str] = frozenset(
+    name for name, (base, thinking) in MODEL_MAP.items()
+    if thinking is not None and thinking is not base
+)
 
 mcp = FastMCP(
     "perplexity-web-mcp",
@@ -238,22 +255,10 @@ def pplx_council(
         for name in models.split(","):
             name = name.strip()
             resolved = resolve_model(name, thinking=thinking)
-            display_names = {
-                "auto": "Auto (Best)",
-                "sonar": "Sonar",
-                "gpt54": "GPT-5.4",
-                "claude_sonnet": "Claude Sonnet 4.6",
-                "claude_opus": "Claude Opus 4.7",
-                "gemini_pro": "Gemini 3.1 Pro",
-                "nemotron": "Nemotron 3 Super",
-                "kimi_k26": "Kimi K2.6",
-            }
-            display = display_names.get(name, name)
-            if thinking and name in ("gpt54", "claude_sonnet", "claude_opus", "kimi_k26"):
+            display = _COUNCIL_DISPLAY_NAMES.get(name, name)
+            if thinking and name in _THINKING_TOGGLEABLE:
                 display += " Thinking"
             model_list.append((display, resolved))
-
-    from perplexity_web_mcp.shared import council_ask
 
     result = council_ask(
         query=query,

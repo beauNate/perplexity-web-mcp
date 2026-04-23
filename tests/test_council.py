@@ -274,17 +274,6 @@ class TestCouncilAsk:
         result = council_ask("test", synthesize=False)
         assert result.synthesis == ""
 
-    @patch("perplexity_web_mcp.shared.check_limits_before_query")
-    def test_rate_limit_returns_error_response(
-        self, mock_limits: MagicMock,
-    ) -> None:
-        mock_limits.return_value = "LIMIT REACHED: Pro Search exhausted"
-
-        result = council_ask("test")
-        assert len(result.individual_results) == 1
-        assert "LIMIT REACHED" in result.individual_results[0].answer
-        assert result.individual_results[0].error == "rate_limit"
-
     @patch("perplexity_web_mcp.shared.check_limits_before_query", return_value=None)
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")

@@ -37,8 +37,8 @@ Complete list of models available through Perplexity Web MCP.
 - **CLI:** `pwm ask "query" -m claude_sonnet` or `pwm ask "query" -m claude_sonnet -t`
 - **MCP:** `pplx_claude_sonnet(query)` or `pplx_claude_sonnet_think(query)`
 
-### claude_opus (Anthropic Claude 4.6 Opus)
-- **Identifier:** `claude46opus` / `claude46opusthinking`
+### claude_opus (Anthropic Claude 4.7 Opus)
+- **Identifier:** `claude47opus` / `claude47opusthinking`
 - **Thinking:** Toggle
 - **CLI:** `pwm ask "query" -m claude_opus` or `pwm ask "query" -m claude_opus -t`
 - **MCP:** `pplx_claude_opus(query)` or `pplx_claude_opus_think(query)`
@@ -57,6 +57,13 @@ Complete list of models available through Perplexity Web MCP.
 - **CLI:** `pwm ask "query" -m nemotron`
 - **MCP:** `pplx_nemotron_thinking(query)` or `pplx_query(query, model="nemotron")`
 - **Notes:** NVIDIA's Nemotron 3 Super 120B model. Thinking is permanently enabled.
+
+### kimi_k26 (Moonshot Kimi K2.6)
+- **Identifier:** `kimik26instant` / `kimik26thinking`
+- **Thinking:** Toggle
+- **CLI:** `pwm ask "query" -m kimi_k26` or `pwm ask "query" -m kimi_k26 -t`
+- **MCP:** `pplx_kimi_k26(query)` or `pplx_kimi_k26_thinking(query)`
+- **Notes:** Moonshot AI's latest model. Costs 1 Pro Search regardless of source_focus — premium model access is what triggers the quota, not web search.
 
 ## Subscription Tiers
 

@@ -429,7 +429,7 @@ def _cmd_usage_impl(refresh):
         table.add_column("Field", style="bold")
         table.add_column("Value", justify="right")
 
-        tier = settings.subscription_tier.title()
+        tier = (settings.subscription_tier or "unknown").title()
         status = settings.subscription_status
         table.add_row("Subscription", f"[bold]{tier}[/] ({status})")
         table.add_row("Total Queries", f"{settings.query_count:,}")

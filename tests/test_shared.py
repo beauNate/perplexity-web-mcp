@@ -161,13 +161,6 @@ class TestAsk:
         assert "[1]: https://a.com" in result
         assert "[2]: https://b.com" in result
 
-    @patch("perplexity_web_mcp.shared.check_limits_before_query")
-    def test_limit_reached_returns_error_message(self, mock_limits: MagicMock) -> None:
-        mock_limits.return_value = "LIMIT REACHED: Pro Search exhausted"
-
-        result = ask("question", Models.BEST)
-        assert "LIMIT REACHED" in result
-
     @patch("perplexity_web_mcp.shared.check_limits_before_query", return_value=None)
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")

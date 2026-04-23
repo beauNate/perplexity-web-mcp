@@ -152,37 +152,11 @@ def is_research_model(model: Model) -> bool:
 
 
 def check_limits_before_query(model: Model) -> str | None:
-    """Check rate limits before executing a query.
+    """Always returns None — pre-flight blocking disabled.
 
-    Returns an error message string if limits are exceeded, None if OK.
-    Does not block the query on cache miss / fetch failure (fail-open).
+    Perplexity's rate-limit API reports 0 while the account still has quota,
+    so real 429s from the request are the authoritative signal instead.
     """
-    cache = get_limit_cache()
-    if cache is None:
-        return None
-
-    limits = cache.get_rate_limits()
-    if limits is None:
-        return None
-
-    if is_research_model(model):
-        if not limits.has_research_queries:
-            return (
-                f"LIMIT REACHED: Deep Research queries exhausted "
-                f"(0 remaining).\n\n"
-                f"Current usage:\n{limits.format_summary()}\n\n"
-                f"Deep Research limits reset monthly. "
-                f"Use a standard model for Pro Search instead."
-            )
-    elif not limits.has_pro_queries:
-        return (
-            f"LIMIT REACHED: Pro Search queries exhausted "
-            f"(0 remaining).\n\n"
-            f"Current usage:\n{limits.format_summary()}\n\n"
-            f"Pro Search limits reset weekly. "
-            f"Consider waiting or upgrading your plan."
-        )
-
     return None
 
 
@@ -279,10 +253,6 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
     so MCP servers can signal isError:true to clients.
     """
     from .exceptions import AuthenticationError, RateLimitError
-
-    limit_error = check_limits_before_query(model)
-    if limit_error:
-        return limit_error
 
     sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
     search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
@@ -449,7 +419,7 @@ def council_ask(
     Args:
         query: The question to ask all models.
         models: List of (display_name, Model) tuples. Defaults to
-                GPT-5.4, Claude Opus 4.6, and Gemini 3.1 Pro.
+                GPT-5.4, Claude Opus 4.7, and Gemini 3.1 Pro.
         source_focus: Source focus for all queries.
         synthesize: Whether to run Sonar synthesis (free, no Pro cost).
         thinking: Use thinking model variants for default council members.

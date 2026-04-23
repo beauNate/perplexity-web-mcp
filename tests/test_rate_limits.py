@@ -618,21 +618,6 @@ class TestMCPServerHelpers:
         assert result is None  # No error, proceed
 
     @patch("perplexity_web_mcp.shared.get_limit_cache")
-    def test_check_limits_pro_exhausted(self, mock_cache_fn: MagicMock) -> None:
-        from perplexity_web_mcp.models import Models
-        from perplexity_web_mcp.shared import check_limits_before_query
-
-        mock_cache = MagicMock()
-        mock_cache.get_rate_limits.return_value = RateLimits(remaining_pro=0, remaining_research=5)
-        mock_cache_fn.return_value = mock_cache
-
-        result = check_limits_before_query(Models.BEST)
-        assert result is not None
-        assert "LIMIT REACHED" in result
-        assert "Pro Search" in result
-        assert "weekly" in result.lower()
-
-    @patch("perplexity_web_mcp.shared.get_limit_cache")
     def test_check_limits_research_ok(self, mock_cache_fn: MagicMock) -> None:
         from perplexity_web_mcp.models import Models
         from perplexity_web_mcp.shared import check_limits_before_query
@@ -643,21 +628,6 @@ class TestMCPServerHelpers:
 
         result = check_limits_before_query(Models.DEEP_RESEARCH)
         assert result is None
-
-    @patch("perplexity_web_mcp.shared.get_limit_cache")
-    def test_check_limits_research_exhausted(self, mock_cache_fn: MagicMock) -> None:
-        from perplexity_web_mcp.models import Models
-        from perplexity_web_mcp.shared import check_limits_before_query
-
-        mock_cache = MagicMock()
-        mock_cache.get_rate_limits.return_value = RateLimits(remaining_pro=100, remaining_research=0)
-        mock_cache_fn.return_value = mock_cache
-
-        result = check_limits_before_query(Models.DEEP_RESEARCH)
-        assert result is not None
-        assert "LIMIT REACHED" in result
-        assert "Deep Research" in result
-        assert "monthly" in result.lower()
 
     @patch("perplexity_web_mcp.shared.get_limit_cache")
     def test_check_limits_no_cache(self, mock_cache_fn: MagicMock) -> None:
@@ -681,28 +651,6 @@ class TestMCPServerHelpers:
 
         result = check_limits_before_query(Models.BEST)
         assert result is None  # Fail-open
-
-    @patch("perplexity_web_mcp.shared.get_limit_cache")
-    def test_check_limits_all_models_pro(self, mock_cache_fn: MagicMock) -> None:
-        """All non-research models should check pro quota."""
-        from perplexity_web_mcp.models import Models
-        from perplexity_web_mcp.shared import check_limits_before_query
-
-        mock_cache = MagicMock()
-        mock_cache.get_rate_limits.return_value = RateLimits(remaining_pro=0, remaining_research=10)
-        mock_cache_fn.return_value = mock_cache
-
-        pro_models = [
-            Models.BEST, Models.SONAR, Models.GPT_54, Models.GPT_54_THINKING,
-            Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING,
-            Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING,
-            Models.GEMINI_31_PRO_THINKING,
-            Models.NEMOTRON_3_SUPER,
-        ]
-        for model in pro_models:
-            result = check_limits_before_query(model)
-            assert result is not None, f"Expected block for {model} with 0 pro remaining"
-            assert "Pro Search" in result
 
     @patch("perplexity_web_mcp.shared.get_limit_cache")
     def test_error_context_with_limits(self, mock_cache_fn: MagicMock) -> None:

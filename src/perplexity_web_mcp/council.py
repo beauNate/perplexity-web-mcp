@@ -221,7 +221,7 @@ def council_ask(
     Returns:
         CouncilResponse with individual results and optional synthesis.
     """
-    from .shared import SOURCE_FOCUS_MAP, check_limits_before_query
+    from .shared import SOURCE_FOCUS_MAP
 
     if models is not None:
         council = models
@@ -231,23 +231,6 @@ def council_ask(
         council = COUNCIL_DEFAULT_MODELS
     sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
     search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
-
-    # Pre-flight: check if we have enough Pro quota for N queries
-    for model_name, model in council:
-        limit_error = check_limits_before_query(model)
-        if limit_error:
-            return CouncilResponse(
-                individual_results=[
-                    CouncilMemberResult(
-                        model_name="Council",
-                        answer=limit_error,
-                        error="rate_limit",
-                    )
-                ],
-                synthesis="",
-                query=query,
-                model_names=[name for name, _ in council],
-            )
 
     model_names = [name for name, _ in council]
     logger.info(f"Council: querying {len(council)} models in parallel: {model_names}")
@@ -276,13 +259,6 @@ def council_ask(
         synthesis = _synthesize(query, results, sources, search_mode)
     elif synthesize and len(successful) < 2:
         synthesis = "[Not enough successful responses to synthesize.]"
-
-    from .rate_limits import RateLimitCache
-    from .shared import get_limit_cache
-
-    cache = get_limit_cache()
-    if cache:
-        cache.invalidate_rate_limits()
 
     return CouncilResponse(
         individual_results=results,
