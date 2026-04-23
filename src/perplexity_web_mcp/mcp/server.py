@@ -82,9 +82,9 @@ def pplx_query(
     Args:
         query: The question to ask
         model: Model to use - auto, sonar, deep_research, gpt54,
-               claude_sonnet, claude_opus, gemini_pro, nemotron
+               claude_sonnet, claude_opus, gemini_pro, nemotron, kimi_k26
         thinking: Enable extended thinking mode (available for gpt54, claude_sonnet,
-                  claude_opus; always on for gemini_pro and nemotron)
+                  claude_opus, kimi_k26; always on for gemini_pro and nemotron)
         source_focus: Source type - none (model only, no search), web, academic,
                       social, finance, all
     """
@@ -136,14 +136,14 @@ def pplx_claude_sonnet_think(query: str, source_focus: SourceFocusName = "web") 
 
 @mcp.tool
 def pplx_claude_opus(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Claude Opus 4.6 — Anthropic's most advanced reasoning model. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
-    return ask(query, Models.CLAUDE_46_OPUS, source_focus)
+    """Claude Opus 4.7 — Anthropic's most advanced reasoning model. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
+    return ask(query, Models.CLAUDE_47_OPUS, source_focus)
 
 
 @mcp.tool
 def pplx_claude_opus_think(query: str, source_focus: SourceFocusName = "web") -> str:
-    """Claude Opus 4.6 Thinking — Anthropic's most advanced reasoning model with extended thinking. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
-    return ask(query, Models.CLAUDE_46_OPUS_THINKING, source_focus)
+    """Claude Opus 4.7 Thinking — Anthropic's most advanced reasoning model with extended thinking. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
+    return ask(query, Models.CLAUDE_47_OPUS_THINKING, source_focus)
 
 
 @mcp.tool
@@ -156,6 +156,18 @@ def pplx_gemini_pro_think(query: str, source_focus: SourceFocusName = "web") -> 
 def pplx_nemotron_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
     """Nemotron 3 Super — NVIDIA's Nemotron 3 Super 120B model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.NEMOTRON_3_SUPER, source_focus)
+
+
+@mcp.tool
+def pplx_kimi_k26(query: str, source_focus: SourceFocusName = "web") -> str:
+    """Kimi K2.6 — Moonshot's advanced model. COSTS 1 PRO SEARCH QUERY."""
+    return ask(query, Models.KIMI_K2_6, source_focus)
+
+
+@mcp.tool
+def pplx_kimi_k26_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
+    """Kimi K2.6 Thinking — Moonshot's advanced model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
+    return ask(query, Models.KIMI_K2_6_THINKING, source_focus)
 
 
 @mcp.tool
@@ -200,24 +212,24 @@ def pplx_council(
     """Model Council — query multiple models in parallel, get synthesized consensus.
 
     IMPORTANT — BEFORE calling this tool, you MUST:
-    1. Tell the user the available models: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron
+    1. Tell the user the available models: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron, kimi_k26
     2. Ask the user WHICH models they want in their council and HOW MANY
     3. Inform them of the cost: each model = 1 Pro Search query, plus 1 free Sonar for synthesis
        (e.g., 3 models = 3 Pro Searches + 1 free Sonar = 3 Pro total)
     4. Get explicit confirmation before executing
 
-    Default council: GPT-5.4, Claude Opus 4.6, Gemini 3.1 Pro (3 diverse providers).
+    Default council: GPT-5.4, Claude Opus 4.7, Gemini 3.1 Pro (3 diverse providers).
 
     Args:
         query: The question to ask all council models
         source_focus: Source type for all models (none/web/academic/social/finance/all)
         models: Comma-separated model names to use as council members.
-                Available: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron.
+                Available: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron, kimi_k26.
                 Default: "gpt54,claude_opus,gemini_pro" (3 models = 3 Pro Searches)
         synthesize: Whether to synthesize a consensus from all responses.
                     Set false to get only individual responses (saves 1 Sonar call).
         thinking: Enable extended thinking for council models (gpt54, claude_sonnet,
-                  claude_opus support toggle; gemini_pro and nemotron are always thinking).
+                  claude_opus, kimi_k26 support toggle; gemini_pro and nemotron are always thinking).
     """
     # Parse custom model list if provided
     model_list = None
@@ -231,12 +243,13 @@ def pplx_council(
                 "sonar": "Sonar",
                 "gpt54": "GPT-5.4",
                 "claude_sonnet": "Claude Sonnet 4.6",
-                "claude_opus": "Claude Opus 4.6",
+                "claude_opus": "Claude Opus 4.7",
                 "gemini_pro": "Gemini 3.1 Pro",
                 "nemotron": "Nemotron 3 Super",
+                "kimi_k26": "Kimi K2.6",
             }
             display = display_names.get(name, name)
-            if thinking and name in ("gpt54", "claude_sonnet", "claude_opus"):
+            if thinking and name in ("gpt54", "claude_sonnet", "claude_opus", "kimi_k26"):
                 display += " Thinking"
             model_list.append((display, resolved))
 

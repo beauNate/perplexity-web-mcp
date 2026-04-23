@@ -31,14 +31,14 @@ logger = get_logger(__name__)
 
 COUNCIL_DEFAULT_MODELS: list[tuple[str, Model]] = [
     ("GPT-5.4", Models.GPT_54),
-    ("Claude Opus 4.6", Models.CLAUDE_46_OPUS),
+    ("Claude Opus 4.7", Models.CLAUDE_47_OPUS),
     ("Gemini 3.1 Pro", Models.GEMINI_31_PRO_THINKING),
 ]
 """Default models for the council (3 diverse providers)."""
 
 COUNCIL_DEFAULT_MODELS_THINKING: list[tuple[str, Model]] = [
     ("GPT-5.4 Thinking", Models.GPT_54_THINKING),
-    ("Claude Opus 4.6 Thinking", Models.CLAUDE_46_OPUS_THINKING),
+    ("Claude Opus 4.7 Thinking", Models.CLAUDE_47_OPUS_THINKING),
     ("Gemini 3.1 Pro", Models.GEMINI_31_PRO_THINKING),
 ]
 """Default models for the council with extended thinking enabled."""

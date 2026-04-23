@@ -43,15 +43,16 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "deep_research": (Models.DEEP_RESEARCH, None),
     "gpt54": (Models.GPT_54, Models.GPT_54_THINKING),
     "claude_sonnet": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
-    "claude_opus": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
+    "claude_opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
     "gemini_pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "nemotron": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
+    "kimi_k26": (Models.KIMI_K2_6, Models.KIMI_K2_6_THINKING),
 }
 
 SourceFocusName = Literal["none", "web", "academic", "social", "finance", "all"]
 ModelName = Literal[
     "auto", "sonar", "deep_research", "gpt54", "claude_sonnet",
-    "claude_opus", "gemini_pro", "nemotron",
+    "claude_opus", "gemini_pro", "nemotron", "kimi_k26",
 ]
 
 MODEL_NAMES: list[str] = list(MODEL_MAP.keys())

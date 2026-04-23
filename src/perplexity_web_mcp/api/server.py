@@ -127,26 +127,29 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     # Legacy Sonnet 4.5 aliases (map to 4.6)
     "claude-sonnet-4-5": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "claude-4-5-sonnet": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
-    "claude-opus-4-6": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
-    "claude-4-6-opus": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
-    "claude-opus-4-6-20260203": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
-    # Legacy Opus 4.5 aliases (map to 4.6)
-    "claude-opus-4-5": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
-    "claude-4-5-opus": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
-    "claude-opus-4-5-20251101": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
+    "claude-opus-4-7": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-4-7-opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-opus-4-7-20260401": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    # Legacy Opus 4.6/4.5 aliases (map to 4.7)
+    "claude-opus-4-6": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-4-6-opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-opus-4-6-20260203": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-opus-4-5": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-4-5-opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-opus-4-5-20251101": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
     # Claude Code default model aliases (for compatibility)
     # These allow `claude --model claude-3-5-sonnet` to work
     "claude-3-5-sonnet": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "claude-3-5-sonnet-20241022": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
-    "claude-3-opus": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
-    "claude-3-opus-20240229": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
+    "claude-3-opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
+    "claude-3-opus-20240229": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
     "claude-3-5-haiku": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),  # Map to Sonnet
     "claude-haiku-4-5-20251001": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),  # Map Haiku to Sonnet
     "claude-haiku": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     # Generic aliases
     "claude": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "sonnet": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
-    "opus": (Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING),
+    "opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
     
     # ==========================================================================
     # OpenAI GPT Models (via Perplexity) - support thinking toggle
@@ -171,6 +174,14 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "nemotron-3-super": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
     "nemotron-3": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
     "nemotron": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
+    
+    # ==========================================================================
+    # Moonshot Kimi Models (via Perplexity)
+    # Kimi K2.6 - supports thinking toggle
+    # ==========================================================================
+    "kimi-k2.6": (Models.KIMI_K2_6, Models.KIMI_K2_6_THINKING),
+    "kimi-k2-6": (Models.KIMI_K2_6, Models.KIMI_K2_6_THINKING),
+    "kimi": (Models.KIMI_K2_6, Models.KIMI_K2_6_THINKING),
 }
 
 # Models we expose via /v1/models
@@ -186,9 +197,11 @@ AVAILABLE_MODELS = [
     {"id": "gpt-5.4", "description": "GPT-5.4 - OpenAI's latest, thinking toggle available"},
     # Anthropic Claude
     {"id": "claude-sonnet-4-6", "description": "Claude Sonnet 4.6 - Fast, thinking toggle available"},
-    {"id": "claude-opus-4-6", "description": "Claude Opus 4.6 - Advanced reasoning, Max tier required"},
+    {"id": "claude-opus-4-7", "description": "Claude Opus 4.7 - Advanced reasoning, Max tier required"},
     # NVIDIA
     {"id": "nemotron-3-super", "description": "Nemotron 3 Super - NVIDIA 120B, thinking always on"},
+    # Moonshot
+    {"id": "kimi-k2.6", "description": "Kimi K2.6 - Advanced, thinking toggle available"},
 ]
 
 

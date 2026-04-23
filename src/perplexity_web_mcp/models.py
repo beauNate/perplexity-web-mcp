@@ -43,12 +43,18 @@ class Models:
     CLAUDE_46_SONNET_THINKING = Model(identifier="claude46sonnetthinking")
     """Claude Sonnet 4.6 Thinking - Anthropic's fast model (thinking)."""
 
-    CLAUDE_46_OPUS = Model(identifier="claude46opus")
-    """Claude Opus 4.6 - Anthropic's most advanced reasoning model."""
+    CLAUDE_47_OPUS = Model(identifier="claude47opus")
+    """Claude Opus 4.7 - Anthropic's most advanced reasoning model."""
 
-    CLAUDE_46_OPUS_THINKING = Model(identifier="claude46opusthinking")
-    """Claude Opus 4.6 Thinking - Anthropic's most advanced reasoning model (thinking)."""
+    CLAUDE_47_OPUS_THINKING = Model(identifier="claude47opusthinking")
+    """Claude Opus 4.7 Thinking - Anthropic's most advanced reasoning model (thinking)."""
 
     NEMOTRON_3_SUPER = Model(identifier="nv_nemotron_3_super")
     """Nemotron 3 Super - NVIDIA's Nemotron 3 Super 120B model (thinking)."""
+
+    KIMI_K2_6 = Model(identifier="kimik26instant")
+    """Kimi K2.6 - Moonshot AI's latest model."""
+
+    KIMI_K2_6_THINKING = Model(identifier="kimik26thinking")
+    """Kimi K2.6 Thinking - Moonshot AI's latest model (thinking)."""
 

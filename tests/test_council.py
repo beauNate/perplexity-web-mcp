@@ -134,7 +134,7 @@ class TestDefaultModels:
         gpt_model = next(m for n, m in COUNCIL_DEFAULT_MODELS_THINKING if "GPT" in n)
         claude_model = next(m for n, m in COUNCIL_DEFAULT_MODELS_THINKING if "Claude" in n)
         assert gpt_model is Models.GPT_54_THINKING
-        assert claude_model is Models.CLAUDE_46_OPUS_THINKING
+        assert claude_model is Models.CLAUDE_47_OPUS_THINKING
 
     def test_thinking_defaults_are_valid_model_instances(self) -> None:
         for name, model in COUNCIL_DEFAULT_MODELS_THINKING:

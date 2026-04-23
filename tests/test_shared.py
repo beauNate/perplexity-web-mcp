@@ -31,7 +31,7 @@ class TestMappings:
 
     def test_model_map_has_all_expected_keys(self) -> None:
         expected = {"auto", "sonar", "deep_research", "gpt54", "claude_sonnet",
-                    "claude_opus", "gemini_pro", "nemotron"}
+                    "claude_opus", "gemini_pro", "nemotron", "kimi_k26"}
         assert set(MODEL_MAP.keys()) == expected
 
     def test_model_names_matches_map_keys(self) -> None:

@@ -695,7 +695,7 @@ class TestMCPServerHelpers:
         pro_models = [
             Models.BEST, Models.SONAR, Models.GPT_54, Models.GPT_54_THINKING,
             Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING,
-            Models.CLAUDE_46_OPUS, Models.CLAUDE_46_OPUS_THINKING,
+            Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING,
             Models.GEMINI_31_PRO_THINKING,
             Models.NEMOTRON_3_SUPER,
         ]

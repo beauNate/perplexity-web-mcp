@@ -64,8 +64,8 @@ MODEL COUNCIL
   pwm council "query" --json                  Output as JSON
 
   Each model in the council costs 1 Pro Search. Default = 3 Pro Searches.
-  Available models: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron
-  Thinking toggle: -t / --thinking (gpt54, claude_sonnet, claude_opus support toggle;
+  Available models: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron, kimi_k26
+  Thinking toggle: -t / --thinking (gpt54, claude_sonnet, claude_opus, kimi_k26 support toggle;
     gemini_pro and nemotron are always thinking)
 
   Examples:
@@ -109,9 +109,10 @@ sonar           experimental            No         Perplexity's latest
 deep_research   pplx_alpha              No         In-depth reports (monthly quota)
 gpt54           gpt54                   Yes        OpenAI GPT-5.4
 claude_sonnet   claude46sonnet          Yes        Anthropic Claude 4.6 Sonnet
-claude_opus     claude46opus            Yes        Anthropic Claude 4.6 Opus (Max tier)
+claude_opus     claude47opus            Yes        Anthropic Claude 4.7 Opus (Max tier)
 gemini_pro      gemini31pro_high        Always     Google Gemini 3.1 Pro (thinking only)
 nemotron        nv_nemotron_3_super     Always     NVIDIA Nemotron 3 Super 120B (thinking only)
+kimi_k26        kimi_k26                Yes        Moonshot Kimi K2.6
 
 "Thinking" = extended reasoning mode. Models marked "Always" have thinking
 permanently enabled with no non-thinking variant.
@@ -165,7 +166,7 @@ QUERY TOOLS (each call costs 1 Pro Search query unless noted):
                synthesize=True, thinking=False)
       Model Council — N PRO SEARCHES (1 per model selected).
       BEFORE CALLING: You MUST ask the user which models and how many.
-      Available: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron.
+      Available: gpt54, claude_sonnet, claude_opus, gemini_pro, nemotron, kimi_k26.
       Default: 3 models (GPT-5.4, Claude Opus, Gemini Pro) = 3 Pro Searches.
       Synthesis uses Sonar (free). Set synthesize=False to skip.
       Set thinking=True to enable extended thinking for all council models.
@@ -179,10 +180,12 @@ QUERY TOOLS (each call costs 1 Pro Search query unless noted):
   pplx_gpt54_thinking(query, source_focus="web") GPT-5.4 + thinking — 1 Pro
   pplx_claude_sonnet(query, source_focus="web")   Claude 4.6 Sonnet — 1 Pro
   pplx_claude_sonnet_think(query, source_focus)   Claude 4.6 Sonnet + thinking — 1 Pro
-  pplx_claude_opus(query, source_focus="web")     Claude 4.6 Opus — 1 Pro (Max tier)
-  pplx_claude_opus_think(query, source_focus)     Claude 4.6 Opus + thinking — 1 Pro (Max tier)
+  pplx_claude_opus(query, source_focus="web")     Claude 4.7 Opus — 1 Pro (Max tier)
+  pplx_claude_opus_think(query, source_focus)     Claude 4.7 Opus + thinking — 1 Pro (Max tier)
   pplx_gemini_pro_think(query, source_focus)      Gemini 3.1 Pro (thinking) — 1 Pro
   pplx_nemotron_thinking(query, source_focus)     Nemotron 3 Super (thinking) — 1 Pro
+  pplx_kimi_k26(query, source_focus="web")        Kimi K2.6 — 1 Pro
+  pplx_kimi_k26_thinking(query, source_focus)     Kimi K2.6 + thinking — 1 Pro
 
   All query tools accept source_focus: "none", "web", "academic", "social",
   "finance", "all". Use "none" for model-only queries without web search.
