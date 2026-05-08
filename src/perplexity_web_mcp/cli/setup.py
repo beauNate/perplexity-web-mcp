@@ -136,6 +136,11 @@ def _opencode_config_path() -> Path:
 
 
 CLIENT_REGISTRY = {
+    "claude-desktop": {
+        "name": "Claude Desktop",
+        "description": "Anthropic Claude Desktop app",
+        "config_fn": _claude_desktop_config_path,
+    },
     "claude-code": {
         "name": "Claude Code",
         "description": "Anthropic CLI (claude command)",
@@ -488,6 +493,7 @@ def _setup_json() -> None:
 def _detect_tool(client_id: str) -> bool:
     """Check if an AI tool is installed/present on the system."""
     checks = {
+        "claude-desktop": lambda: _claude_desktop_config_path().parent.exists(),
         "claude-code": lambda: shutil.which("claude") is not None,
         "gemini": lambda: (
             shutil.which("gemini") is not None
