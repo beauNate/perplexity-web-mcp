@@ -6,12 +6,12 @@ to the appropriate location for each supported AI platform.
 
 from __future__ import annotations
 
-import re
-import shutil
-import sys
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
+import re
+import shutil
+import sys
 
 
 SKILL_DIR_NAME = "perplexity-web-mcp"
@@ -319,7 +319,7 @@ Where `<tool>` is: claude-code, cursor, codex, opencode, gemini-cli, antigravity
     print(f"  Exported all formats to {export_dir}")
     print(f"    {SKILL_DIR_NAME}/SKILL.md")
     print(f"    {SKILL_DIR_NAME}/references/")
-    print(f"    README.md (installation instructions)")
+    print("    README.md (installation instructions)")
     return 0
 
 
@@ -447,7 +447,7 @@ def cmd_skill(args: list[str]) -> int:
 
             print(f"{t.name:<16} {t.description:<32} {user_status:<14} {proj_status}")
 
-        print(f"\nLegend: ✓ = installed, - = not installed")
+        print("\nLegend: ✓ = installed, - = not installed")
         if any_outdated:
             print(f"Some skills are outdated (current: v{current_version}). Run 'pwm skill update' to update.")
         return 0
@@ -519,7 +519,7 @@ def cmd_skill(args: list[str]) -> int:
                     shutil.rmtree(export_dir)
                     print(f"  other: Removed export directory {export_dir}")
                 else:
-                    print(f"  other: No export directory found.")
+                    print("  other: No export directory found.")
                 return 0
 
             removed = False

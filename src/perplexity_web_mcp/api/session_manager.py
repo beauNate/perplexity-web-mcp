@@ -11,14 +11,14 @@ This combined with tool_calling.py gives us the full hybrid approach.
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import hashlib
 import logging
-import time
-from dataclasses import dataclass, field
 from threading import Lock
+import time
 from typing import Any
 
-from perplexity_web_mcp import Perplexity, ConversationConfig
+from perplexity_web_mcp import ConversationConfig, Perplexity
 from perplexity_web_mcp.enums import CitationMode
 from perplexity_web_mcp.models import Model
 
@@ -55,17 +55,17 @@ def distill_system_prompt(system_prompt: str | None) -> str:
     """
     if not system_prompt:
         return CLAUDE_CODE_DISTILLED  # Default to coding assistant behavior
-    
+
     # Detect Claude Code's system prompt
     prompt_lower = system_prompt.lower()
     if any(marker.lower() in prompt_lower for marker in CLAUDE_CODE_MARKERS):
         return CLAUDE_CODE_DISTILLED
-    
+
     # For other system prompts, try to extract key instructions
     # Look for common patterns
     lines = system_prompt.split('\n')
     key_lines = []
-    
+
     for line in lines:
         line = line.strip()
         if not line:
@@ -77,17 +77,17 @@ def distill_system_prompt(system_prompt: str | None) -> str:
         ]):
             if len(line) < 200:  # Skip very long lines
                 key_lines.append(line)
-        
+
         # Limit extraction
         if len(key_lines) >= 10:
             break
-    
+
     if key_lines:
         distilled = '\n'.join(key_lines[:5])  # Take top 5
         if len(distilled) > 500:
             distilled = distilled[:500] + '...'
         return distilled
-    
+
     # Fallback: take first 300 chars
     return system_prompt[:300] + ('...' if len(system_prompt) > 300 else '')
 
@@ -103,7 +103,7 @@ def hash_system_prompt(system_prompt: str | None) -> str:
     """
     if not system_prompt:
         return "default"
-    
+
     # Use first 1000 chars for hashing (enough to differentiate, not too slow)
     content = system_prompt[:1000]
     return hashlib.sha256(content.encode()).hexdigest()[:16]
@@ -116,7 +116,7 @@ def hash_system_prompt(system_prompt: str | None) -> str:
 @dataclass
 class Session:
     """A primed conversation session."""
-    
+
     conversation: Any  # Perplexity Conversation object
     system_hash: str
     model: Model
@@ -125,12 +125,12 @@ class Session:
     request_count: int = 0
     is_primed: bool = False
     in_use: bool = False  # Track if currently being used
-    
+
     def touch(self):
         """Update last used timestamp."""
         self.last_used = time.time()
         self.request_count += 1
-    
+
     def acquire(self) -> bool:
         """Try to acquire this session. Returns True if successful."""
         if not self.in_use:
@@ -138,16 +138,16 @@ class Session:
             self.touch()
             return True
         return False
-    
+
     def release(self):
         """Release this session for reuse."""
         self.in_use = False
-    
+
     @property
     def age_seconds(self) -> float:
         """Session age in seconds."""
         return time.time() - self.created_at
-    
+
     @property
     def idle_seconds(self) -> float:
         """Time since last use in seconds."""
@@ -167,7 +167,7 @@ class ConversationManager:
     - Tracks which sessions are in-use vs available
     - Automatically expires idle sessions
     """
-    
+
     def __init__(
         self,
         client: Perplexity,
@@ -190,7 +190,7 @@ class ConversationManager:
         # Pool of sessions per key
         self._session_pools: dict[str, list[Session]] = {}
         self._lock = Lock()
-    
+
     def _cleanup_expired(self):
         """Remove expired sessions (call with lock held)."""
         for key in list(self._session_pools.keys()):
@@ -203,7 +203,7 @@ class ConversationManager:
             # Remove empty pools
             if not self._session_pools[key]:
                 del self._session_pools[key]
-        
+
         # Enforce max total sessions
         total = sum(len(p) for p in self._session_pools.values())
         if total > self.max_sessions:
@@ -215,16 +215,16 @@ class ConversationManager:
                 if not s.in_use
             ]
             all_sessions.sort(key=lambda x: x[2].last_used)
-            
+
             to_remove = total - self.max_sessions
             for key, idx, _ in all_sessions[:to_remove]:
                 if key in self._session_pools and idx < len(self._session_pools[key]):
                     del self._session_pools[key][idx]
-    
+
     def _get_session_key(self, system_hash: str, model: Model) -> str:
         """Create a unique session key from system hash and model."""
         return f"{system_hash}:{model.identifier}"
-    
+
     def get_or_create_session(
         self,
         model: Model,
@@ -246,22 +246,22 @@ class ConversationManager:
         """
         system_hash = hash_system_prompt(system_prompt)
         session_key = self._get_session_key(system_hash, model)
-        
+
         with self._lock:
             self._cleanup_expired()
-            
+
             # Get or create pool for this key
             if session_key not in self._session_pools:
                 self._session_pools[session_key] = []
-            
+
             pool = self._session_pools[session_key]
-            
+
             # Try to find an available session in the pool
             for session in pool:
                 if session.acquire():
                     logging.debug(f"Acquired session from pool {session_key[:8]}... (request #{session.request_count})")
                     return session, False
-            
+
             # No available sessions - create new one if under limit
             if len(pool) < self.max_sessions_per_pool:
                 conversation = self.client.create_conversation(
@@ -270,7 +270,7 @@ class ConversationManager:
                         citation_mode=CitationMode.CLEAN,
                     )
                 )
-                
+
                 session = Session(
                     conversation=conversation,
                     system_hash=system_hash,
@@ -279,9 +279,9 @@ class ConversationManager:
                 session.acquire()  # Mark as in-use immediately
                 pool.append(session)
                 logging.debug(f"Created new session for pool {session_key[:8]}... (pool size: {len(pool)})")
-                
+
                 return session, True
-            
+
             # Pool is full and all sessions busy - wait for one (should rarely happen)
             # For now, create a temporary session that won't be pooled
             logging.warning(f"Pool {session_key[:8]}... is full ({len(pool)} sessions), creating overflow session")
@@ -291,7 +291,7 @@ class ConversationManager:
                     citation_mode=CitationMode.CLEAN,
                 )
             )
-            
+
             session = Session(
                 conversation=conversation,
                 system_hash=system_hash,
@@ -300,12 +300,12 @@ class ConversationManager:
             session.acquire()
             # Don't add to pool - it's overflow
             return session, True
-    
+
     def release_session(self, session: Session):
         """Release a session back to the pool for reuse."""
         session.release()
         logging.debug(f"Released session (hash: {session.system_hash[:8]}...)")
-    
+
     def prime_session(
         self,
         session: Session,
@@ -326,10 +326,10 @@ class ConversationManager:
         """
         if session.is_primed:
             return None
-        
+
         # Build priming message
         distilled = distill_system_prompt(system_prompt)
-        
+
         priming_parts = [
             "CONTEXT INITIALIZATION",
             "=" * 40,
@@ -338,7 +338,7 @@ class ConversationManager:
             distilled,
             "",
         ]
-        
+
         if tools:
             # Include tool awareness in priming
             tool_names = [t.get("name", "unknown") for t in tools[:10]]  # First 10 tools
@@ -349,14 +349,14 @@ class ConversationManager:
                 "When I ask you to perform actions, use the appropriate tools.",
                 "",
             ])
-        
+
         priming_parts.extend([
             "=" * 40,
             "Acknowledge this context with a brief 'Ready.' response.",
         ])
-        
+
         priming_message = "\n".join(priming_parts)
-        
+
         # Send priming message
         try:
             session.conversation.ask(priming_message)
@@ -366,7 +366,7 @@ class ConversationManager:
         except Exception as e:
             logging.error(f"Failed to prime session: {e}")
             return None
-    
+
     def clear_pool(self, system_prompt: str | None, model: Model):
         """Clear a specific session pool.
         
@@ -376,30 +376,30 @@ class ConversationManager:
         """
         system_hash = hash_system_prompt(system_prompt)
         session_key = self._get_session_key(system_hash, model)
-        
+
         with self._lock:
             if session_key in self._session_pools:
                 del self._session_pools[session_key]
                 logging.debug(f"Cleared pool {session_key[:8]}...")
-    
+
     def clear_all(self):
         """Clear all cached sessions."""
         with self._lock:
             total = sum(len(p) for p in self._session_pools.values())
             self._session_pools.clear()
             logging.info(f"Cleared {total} sessions")
-    
+
     @property
     def session_count(self) -> int:
         """Total number of pooled sessions."""
         with self._lock:
             return sum(len(p) for p in self._session_pools.values())
-    
+
     def get_stats(self) -> dict[str, Any]:
         """Get session pool statistics."""
         with self._lock:
             all_sessions = [s for pool in self._session_pools.values() for s in pool]
-            
+
             if not all_sessions:
                 return {
                     "total_sessions": 0,
@@ -408,10 +408,10 @@ class ConversationManager:
                     "total_requests": 0,
                     "pools": 0,
                 }
-            
+
             total_requests = sum(s.request_count for s in all_sessions)
             in_use = sum(1 for s in all_sessions if s.in_use)
-            
+
             return {
                 "total_sessions": len(all_sessions),
                 "sessions_in_use": in_use,

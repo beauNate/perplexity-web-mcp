@@ -7,10 +7,8 @@ before using the tool.
 
 from __future__ import annotations
 
-import shutil
-import sys
 from importlib import metadata
-from pathlib import Path
+import shutil
 
 from perplexity_web_mcp.token_store import TOKEN_FILE, load_token
 
@@ -109,7 +107,7 @@ def cmd_doctor(args: list[str]) -> int:
 
     # --- Skill Installation ---
     print("\nSkill Installation")
-    from perplexity_web_mcp.cli.skill import _get_targets, _get_installed_version, _get_current_version, SKILL_DIR_NAME
+    from perplexity_web_mcp.cli.skill import SKILL_DIR_NAME, _get_current_version, _get_installed_version, _get_targets
     skill_targets = _get_targets()
     current_ver = _get_current_version()
     any_skill = False

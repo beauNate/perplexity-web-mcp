@@ -19,8 +19,8 @@ Subcommands:
 
 from __future__ import annotations
 
-import sys
 from importlib import metadata
+import sys
 from typing import NoReturn
 
 import rich_click as click

@@ -29,32 +29,35 @@ Claude Code Integration:
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
 import time
+from typing import Any
 import uuid
-from contextlib import asynccontextmanager
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, AsyncGenerator
 
-import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field
+import uvicorn
 
-from perplexity_web_mcp import Perplexity, ConversationConfig, Models
-from perplexity_web_mcp.enums import CitationMode
-from perplexity_web_mcp.models import Model
-from perplexity_web_mcp.token_store import load_token
+from perplexity_web_mcp import ConversationConfig, Models, Perplexity
+
 # Tool calling disabled for now - models don't reliably follow format instructions
 # from perplexity_web_mcp.api.tool_calling import (...)
 from perplexity_web_mcp.api.session_manager import (
     ConversationManager,
     distill_system_prompt,
 )
+from perplexity_web_mcp.enums import CitationMode
+from perplexity_web_mcp.models import Model
+from perplexity_web_mcp.token_store import load_token
+
 
 # Supported Anthropic API version
 ANTHROPIC_API_VERSION = "2023-06-01"
@@ -67,16 +70,16 @@ ANTHROPIC_API_VERSION = "2023-06-01"
 @dataclass
 class ServerConfig:
     """Server configuration from environment variables."""
-    
+
     session_token: str
     api_key: str | None = None  # Optional auth
     host: str = "0.0.0.0"
     port: int = 8080
     log_level: str = "INFO"
     default_model: str = "auto"
-    
+
     @classmethod
-    def from_env(cls) -> "ServerConfig":
+    def from_env(cls) -> ServerConfig:
         """Load from environment."""
         # Try to load from token store (env var or ~/.config/perplexity-web-mcp/token)
         session_token = load_token()
@@ -85,7 +88,7 @@ class ServerConfig:
                 "No Perplexity session token found. "
                 "Run 'pwm-auth' to authenticate."
             )
-        
+
         return cls(
             session_token=session_token,
             api_key=os.getenv("ANTHROPIC_API_KEY"),  # For auth validation
@@ -114,7 +117,7 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "sonar": (Models.SONAR, None),
     "perplexity-research": (Models.DEEP_RESEARCH, None),
     "deep-research": (Models.DEEP_RESEARCH, None),
-    
+
     # ==========================================================================
     # Anthropic Claude Models (via Perplexity)
     # Claude Sonnet 4.6 - supports thinking toggle
@@ -150,7 +153,7 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "claude": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "sonnet": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
-    
+
     # ==========================================================================
     # OpenAI GPT Models (via Perplexity) - support thinking toggle
     # ==========================================================================
@@ -162,7 +165,7 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "gpt-5-5": (Models.GPT_55, Models.GPT_55_THINKING),
     "gpt-55": (Models.GPT_55, Models.GPT_55_THINKING),
     "gpt55": (Models.GPT_55, Models.GPT_55_THINKING),
-    
+
     # ==========================================================================
     # Google Gemini Models (via Perplexity)
     # Gemini 3.1 Pro: thinking ALWAYS enabled (no toggle in UI)
@@ -170,7 +173,7 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "gemini-3.1-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "gemini-3-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "gemini-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
-    
+
     # ==========================================================================
     # NVIDIA Nemotron 3 Super (via Perplexity)
     # Thinking ALWAYS enabled (no toggle in UI) - reasoning only
@@ -178,7 +181,7 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "nemotron-3-super": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
     "nemotron-3": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
     "nemotron": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
-    
+
     # ==========================================================================
     # Moonshot Kimi Models (via Perplexity)
     # Kimi K2.6 - supports thinking toggle
@@ -259,9 +262,9 @@ class MessageParam(BaseModel):
     """
     role: str  # "user" or "assistant"
     content: str | list[dict[str, Any]]
-    
+
     model_config = ConfigDict(extra="allow")
-    
+
     def get_text(self) -> str:
         """Extract text content from message.
         
@@ -286,7 +289,7 @@ class MessagesRequest(BaseModel):
     model: str = Field(..., description="Model to use (e.g., 'claude-sonnet-4-6')")
     max_tokens: int = Field(..., description="Maximum tokens to generate")
     messages: list[MessageParam] = Field(..., description="Conversation messages")
-    
+
     # Optional parameters
     # System can be a string OR an array of content blocks (for prompt caching)
     system: str | list[dict[str, Any]] | None = Field(None, description="System prompt")
@@ -296,19 +299,19 @@ class MessagesRequest(BaseModel):
     top_k: int | None = Field(None, ge=0, description="Top-k sampling")
     stop_sequences: list[str] | None = Field(None, description="Stop sequences")
     metadata: dict[str, Any] | None = Field(None, description="Request metadata")
-    
+
     # Extended thinking (maps to Perplexity thinking models)
     thinking: dict[str, Any] | None = Field(
-        None, 
+        None,
         description="Extended thinking config. Set type='enabled' to use thinking models."
     )
-    
+
     # Tools support (for Claude Code)
     tools: list[dict[str, Any]] | None = Field(None, description="Available tools")
     tool_choice: dict[str, Any] | str | None = Field(None, description="Tool choice config")
-    
+
     model_config = ConfigDict(extra="allow")
-    
+
     def get_system_text(self) -> str | None:
         """Extract system prompt text, handling both string and array formats."""
         if self.system is None:
@@ -385,9 +388,9 @@ class OpenAIChatMessage(BaseModel):
     role: str = Field(..., description="Message role: system, user, or assistant")
     content: str | list[dict[str, Any]] | None = Field(None, description="Message content")
     name: str | None = Field(None, description="Optional name for the participant")
-    
+
     model_config = ConfigDict(extra="allow")
-    
+
     def get_text(self) -> str:
         """Extract text content from message."""
         if self.content is None:
@@ -409,7 +412,7 @@ class OpenAIChatRequest(BaseModel):
     """
     model: str = Field(..., description="Model ID (e.g., 'gpt-4o')")
     messages: list[OpenAIChatMessage] = Field(..., description="Conversation messages")
-    
+
     # Optional parameters
     max_tokens: int | None = Field(None, description="Max tokens (deprecated, use max_completion_tokens)")
     max_completion_tokens: int | None = Field(None, description="Max completion tokens")
@@ -422,10 +425,10 @@ class OpenAIChatRequest(BaseModel):
     presence_penalty: float | None = Field(None, ge=-2, le=2)
     frequency_penalty: float | None = Field(None, ge=-2, le=2)
     user: str | None = Field(None, description="User identifier")
-    
+
     # Extended features
     reasoning_effort: str | None = Field(None, description="Reasoning effort level")
-    
+
     model_config = ConfigDict(extra="allow")
 
 
@@ -505,7 +508,7 @@ MIN_REQUEST_INTERVAL: float = 5.0  # Minimum seconds between Perplexity requests
 async def lifespan(app: FastAPI):
     """Application lifespan."""
     global config, client, conversation_manager, start_time, perplexity_semaphore
-    
+
     start_time = datetime.now()
     config = ServerConfig.from_env()
     client = Perplexity(session_token=config.session_token)
@@ -516,18 +519,18 @@ async def lifespan(app: FastAPI):
     )
     # Limit concurrent Perplexity requests to 1 - curl_cffi can't handle concurrency
     perplexity_semaphore = asyncio.Semaphore(1)
-    
+
     logging.basicConfig(
         level=getattr(logging, config.log_level.upper(), logging.INFO),
         format="%(asctime)s - %(levelname)s - %(message)s",
     )
-    
+
     logging.info(f"Starting Anthropic API server on http://{config.host}:{config.port}")
     logging.info(f"Auth required: {'Yes' if config.api_key else 'No'}")
     logging.info("Fresh client per request, single ask (system prepended), serialized")
-    
+
     yield
-    
+
     conversation_manager.clear_all()
     client.close()
 
@@ -566,13 +569,12 @@ def verify_auth(request: Request) -> None:
     # If no API key is configured, accept any auth (Claude Code compatibility)
     if not config.api_key:
         return
-    
+
     auth = request.headers.get("x-api-key", "")
     if not auth:
         auth = request.headers.get("Authorization", "")
-        if auth.startswith("Bearer "):
-            auth = auth[7:]
-    
+        auth = auth.removeprefix("Bearer ")
+
     # If API key is configured, validate it
     if auth != config.api_key:
         raise HTTPException(
@@ -601,7 +603,7 @@ def messages_to_query(messages: list[MessageParam]) -> str:
             parts.append(text if len(messages) == 1 else f"User: {text}")
         elif msg.role == "assistant":
             parts.append(f"Assistant: {text}")
-    
+
     return "\n\n".join(parts)
 
 
@@ -613,12 +615,12 @@ def openai_messages_to_query(messages: list[OpenAIChatMessage]) -> str:
     """
     # Filter out system messages and get user/assistant messages only
     conversation_msgs = [m for m in messages if m.role in ("user", "assistant")]
-    
+
     # For single user message, just return it directly
     user_msgs = [m for m in conversation_msgs if m.role == "user"]
     if len(user_msgs) == 1 and len(conversation_msgs) == 1:
         return user_msgs[0].get_text()
-    
+
     # Multi-turn: format as conversation
     parts = []
     for msg in conversation_msgs:
@@ -627,7 +629,7 @@ def openai_messages_to_query(messages: list[OpenAIChatMessage]) -> str:
             parts.append(f"User: {text}")
         elif msg.role == "assistant":
             parts.append(f"Assistant: {text}")
-    
+
     return "\n\n".join(parts)
 
 
@@ -640,13 +642,13 @@ def format_citations(search_results: list) -> str:
     """Format search results as citations to append to response."""
     if not search_results:
         return ""
-    
+
     citations = ["\n\nCitations:"]
     for i, result in enumerate(search_results, 1):
         url = getattr(result, 'url', '') or ''
         if url:
             citations.append(f"\n[{i}]: {url}")
-    
+
     return "".join(citations) if len(citations) > 1 else ""
 
 
@@ -685,11 +687,11 @@ async def count_tokens(request: Request, body: CountTokensRequest):
     Returns estimated token count. Claude Code calls this frequently.
     """
     verify_auth(request)
-    
+
     # Estimate tokens from messages
     query = messages_to_query(body.messages)
     input_tokens = estimate_tokens(query)
-    
+
     return {
         "input_tokens": input_tokens,
     }
@@ -710,7 +712,7 @@ async def health():
 async def list_models(request: Request):
     """List available models (OpenAI-compatible format)."""
     verify_auth(request)
-    
+
     now = int(time.time())
     return ModelsListResponse(
         data=[
@@ -735,7 +737,7 @@ async def create_message(request: Request, body: MessagesRequest):
     """
     verify_auth(request)
     check_anthropic_version(request)
-    
+
     # Claude Code sends internal requests with haiku model for capabilities/warmup
     # Return a quick mock response to avoid concurrent Perplexity calls
     if body.model and "haiku" in body.model.lower():
@@ -746,7 +748,7 @@ async def create_message(request: Request, body: MessagesRequest):
             if msg.role == "user":
                 user_msg = msg.get_text()[:50]
         mock_response = f"Response to: {user_msg}" if user_msg else "OK"
-        
+
         if body.stream:
             async def mock_stream():
                 yield f"event: message_start\ndata: {json.dumps({'type': 'message_start', 'message': {'id': response_id, 'type': 'message', 'role': 'assistant', 'content': [], 'model': body.model, 'stop_reason': None, 'stop_sequence': None, 'usage': {'input_tokens': 10, 'output_tokens': 0}}})}\n\n"
@@ -755,7 +757,7 @@ async def create_message(request: Request, body: MessagesRequest):
                 yield f"event: content_block_stop\ndata: {json.dumps({'type': 'content_block_stop', 'index': 0})}\n\n"
                 yield f"event: message_delta\ndata: {json.dumps({'type': 'message_delta', 'delta': {'stop_reason': 'end_turn', 'stop_sequence': None}, 'usage': {'output_tokens': len(mock_response.split())}})}\n\n"
                 yield f"event: message_stop\ndata: {json.dumps({'type': 'message_stop'})}\n\n"
-            
+
             logging.info(f"Mock response for internal model: {body.model}")
             return StreamingResponse(mock_stream(), media_type="text/event-stream")
         else:
@@ -769,31 +771,31 @@ async def create_message(request: Request, body: MessagesRequest):
                 stop_reason="end_turn",
                 usage=Usage(input_tokens=10, output_tokens=len(mock_response.split())),
             )
-    
+
     if not body.messages:
         raise HTTPException(
             status_code=400,
             detail={"type": "invalid_request_error", "message": "messages is required"}
         )
-    
+
     # Determine if thinking mode is requested
     thinking_enabled = body.thinking is not None and body.thinking.get("type") == "enabled"
-    
+
     # Get the appropriate model
     model = get_model(body.model, thinking=thinking_enabled)
-    
+
     # Get system prompt text
     system_text = body.get_system_text()
-    
+
     # Convert messages to query (tool calling not supported via web UI)
     query = messages_to_query(body.messages)
     input_tokens = estimate_tokens(query)
-    
+
     # Generate response ID
     response_id = f"msg_{uuid.uuid4().hex[:24]}"
-    
+
     logging.info(f"Request: model={body.model}, thinking={thinking_enabled}, stream={body.stream}")
-    
+
     if body.stream:
         return StreamingResponse(
             stream_response(response_id, body.model, model, query, input_tokens, system_text),
@@ -804,14 +806,14 @@ async def create_message(request: Request, body: MessagesRequest):
                 "X-Accel-Buffering": "no",
             },
         )
-    
+
     # Non-streaming response
     try:
         # Create fresh client for each request (with semaphore to limit concurrency)
         async with perplexity_semaphore:
             global last_request_time
             import time as time_module
-            
+
             # Rate limiting: ensure minimum interval between requests
             now = time_module.time()
             wait_needed = MIN_REQUEST_INTERVAL - (now - last_request_time)
@@ -819,13 +821,13 @@ async def create_message(request: Request, body: MessagesRequest):
                 logging.debug(f"Rate limiting: waiting {wait_needed:.1f}s")
                 await asyncio.sleep(wait_needed)
             last_request_time = time_module.time()
-            
+
             # Prepend distilled system prompt to query (single ask)
             full_query = query
             if system_text:
                 distilled = distill_system_prompt(system_text)
                 full_query = f"[Instructions: {distilled}]\n\n{query}"
-            
+
             fresh_client = Perplexity(session_token=config.session_token)
             conversation = fresh_client.create_conversation(
                 ConversationConfig(model=model, citation_mode=CitationMode.DEFAULT)
@@ -834,11 +836,11 @@ async def create_message(request: Request, body: MessagesRequest):
             await asyncio.to_thread(conversation.ask, full_query)
             fresh_client.close()
         answer = conversation.answer or ""
-        
+
         # Append citations if available
         citations = format_citations(conversation.search_results)
         full_response = answer + citations
-        
+
         return {
             "id": response_id,
             "type": "message",
@@ -852,7 +854,7 @@ async def create_message(request: Request, body: MessagesRequest):
                 "output_tokens": estimate_tokens(full_response),
             },
         }
-    
+
     except Exception as e:
         logging.error(f"Error creating message: {e}")
         raise HTTPException(
@@ -884,11 +886,11 @@ async def stream_response(
     """
     import threading
     import time as time_module
-    
+
     # Acquire semaphore to serialize Perplexity requests
     await perplexity_semaphore.acquire()
     semaphore_released = False
-    
+
     # 1. message_start event
     message_start = {
         "type": "message_start",
@@ -904,7 +906,7 @@ async def stream_response(
         }
     }
     yield f"event: message_start\ndata: {json.dumps(message_start)}\n\n"
-    
+
     # 2. content_block_start event for text
     content_block_start = {
         "type": "content_block_start",
@@ -912,38 +914,38 @@ async def stream_response(
         "content_block": {"type": "text", "text": ""},
     }
     yield f"event: content_block_start\ndata: {json.dumps(content_block_start)}\n\n"
-    
+
     # Stream content deltas from Perplexity
     queue: asyncio.Queue[tuple[str, str]] = asyncio.Queue()
     loop = asyncio.get_running_loop()
-    
+
     def release_semaphore():
         nonlocal semaphore_released
         if not semaphore_released:
             semaphore_released = True
             loop.call_soon_threadsafe(perplexity_semaphore.release)
-    
+
     def producer():
         """Background thread to stream from Perplexity with retry."""
         global last_request_time
-        
+
         # Rate limiting: ensure minimum interval since LAST REQUEST COMPLETED
         now = time_module.time()
         wait_needed = MIN_REQUEST_INTERVAL - (now - last_request_time)
         if wait_needed > 0:
             logging.info(f"Rate limiting: waiting {wait_needed:.1f}s before next Perplexity request")
             time_module.sleep(wait_needed)
-        
+
         last = ""
         max_retries = 3
-        
+
         # Prepend distilled system prompt to query (single ask instead of priming)
         full_query = query
         if system_text:
             distilled = distill_system_prompt(system_text)
             full_query = f"[Instructions: {distilled}]\n\n{query}"
             logging.debug(f"Query with system context ({len(distilled)} chars)")
-        
+
         for attempt in range(max_retries):
             try:
                 # Create fresh client for each request to avoid curl_cffi Session issues
@@ -951,7 +953,7 @@ async def stream_response(
                 conversation = fresh_client.create_conversation(
                     ConversationConfig(model=model, citation_mode=CitationMode.DEFAULT)
                 )
-                
+
                 # Single ask with prepended system context
                 for resp in conversation.ask(full_query, stream=True):
                     current = resp.answer or ""
@@ -959,7 +961,7 @@ async def stream_response(
                         delta = current[len(last):]
                         last = current
                         loop.call_soon_threadsafe(queue.put_nowait, ("delta", delta))
-                
+
                 # Get citations from search results
                 citations = format_citations(conversation.search_results)
                 loop.call_soon_threadsafe(queue.put_nowait, ("done", (last, citations)))
@@ -978,33 +980,33 @@ async def stream_response(
                     continue
                 loop.call_soon_threadsafe(queue.put_nowait, ("error", error_str))
                 break
-        
+
         release_semaphore()
-    
+
     threading.Thread(target=producer, daemon=True).start()
-    
+
     # 3. content_block_delta events
     total_output = ""
     citations_text = ""
     delta_count = 0
-    
+
     while True:
         kind, payload = await queue.get()
         if kind == "delta":
             total_output += payload
             delta_count += 1
-            
+
             delta_event = {
                 "type": "content_block_delta",
                 "index": 0,
                 "delta": {"type": "text_delta", "text": payload},
             }
             yield f"event: content_block_delta\ndata: {json.dumps(delta_event)}\n\n"
-            
+
             # 4. Send periodic ping events for keepalive
             if delta_count % 10 == 0:
                 yield f"event: ping\ndata: {json.dumps({'type': 'ping'})}\n\n"
-                
+
         elif kind == "error":
             logging.error(f"Stream error: {payload}")
             # Add recovery instructions for 403 errors
@@ -1024,7 +1026,7 @@ async def stream_response(
         else:  # done - payload is (answer, citations)
             total_output, citations_text = payload
             break
-    
+
     # Stream citations if available
     if citations_text:
         citation_delta = {
@@ -1034,10 +1036,10 @@ async def stream_response(
         }
         yield f"event: content_block_delta\ndata: {json.dumps(citation_delta)}\n\n"
         total_output += citations_text
-    
+
     # 5. content_block_stop event
     yield f"event: content_block_stop\ndata: {json.dumps({'type': 'content_block_stop', 'index': 0})}\n\n"
-    
+
     # 6. message_delta event (final usage)
     output_tokens = estimate_tokens(total_output)
     message_delta = {
@@ -1046,14 +1048,14 @@ async def stream_response(
         "usage": {"output_tokens": output_tokens},
     }
     yield f"event: message_delta\ndata: {json.dumps(message_delta)}\n\n"
-    
+
     # 7. message_stop event
     yield f"event: message_stop\ndata: {json.dumps({'type': 'message_stop'})}\n\n"
-    
+
     # Ensure semaphore is released
     if not semaphore_released:
         perplexity_semaphore.release()
-    
+
     logging.info(f"Stream complete: {output_tokens} output tokens")
 
 
@@ -1073,30 +1075,30 @@ async def create_chat_completion(request: Request, body: OpenAIChatRequest):
     - Reasoning effort mapping to thinking models
     """
     verify_auth(request)
-    
+
     if not body.messages:
         raise HTTPException(
             status_code=400,
             detail={"error": {"type": "invalid_request_error", "message": "messages is required"}}
         )
-    
+
     # Determine if thinking mode should be enabled
     # Map reasoning_effort to thinking models
     thinking_enabled = body.reasoning_effort in ("medium", "high", "xhigh")
-    
+
     # Get the appropriate model
     model = get_model(body.model, thinking=thinking_enabled)
-    
+
     # Convert messages to query
     query = openai_messages_to_query(body.messages)
     input_tokens = estimate_tokens(query)
-    
+
     # Generate response ID
     response_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
     created = int(time.time())
-    
+
     logging.info(f"OpenAI Request: model={body.model}, thinking={thinking_enabled}, stream={body.stream}")
-    
+
     if body.stream:
         return StreamingResponse(
             stream_openai_response(response_id, body.model, model, query, created),
@@ -1107,7 +1109,7 @@ async def create_chat_completion(request: Request, body: OpenAIChatRequest):
                 "X-Accel-Buffering": "no",
             },
         )
-    
+
     # Non-streaming response
     try:
         conversation = client.create_conversation(
@@ -1116,16 +1118,16 @@ async def create_chat_completion(request: Request, body: OpenAIChatRequest):
                 citation_mode=CitationMode.DEFAULT,
             )
         )
-        
+
         # Run in thread to not block
         await asyncio.to_thread(conversation.ask, query)
         answer = conversation.answer or ""
-        
+
         # Append citations if available
         citations = format_citations(conversation.search_results)
         full_response = answer + citations
         output_tokens = estimate_tokens(full_response)
-        
+
         return OpenAIChatResponse(
             id=response_id,
             created=created,
@@ -1143,7 +1145,7 @@ async def create_chat_completion(request: Request, body: OpenAIChatRequest):
                 total_tokens=input_tokens + output_tokens,
             ),
         )
-    
+
     except Exception as e:
         logging.error(f"Error creating chat completion: {e}")
         raise HTTPException(
@@ -1170,7 +1172,7 @@ async def stream_openai_response(
     Reference: https://platform.openai.com/docs/api-reference/chat/streaming
     """
     import threading
-    
+
     # 1. Initial chunk with role
     initial_chunk = OpenAIStreamResponse(
         id=response_id,
@@ -1185,11 +1187,11 @@ async def stream_openai_response(
         ],
     )
     yield f"data: {initial_chunk.model_dump_json()}\n\n"
-    
+
     # Stream content deltas from Perplexity
     queue: asyncio.Queue[tuple[str, str]] = asyncio.Queue()
     loop = asyncio.get_running_loop()
-    
+
     def producer():
         """Background thread to stream from Perplexity."""
         last = ""
@@ -1208,9 +1210,9 @@ async def stream_openai_response(
             loop.call_soon_threadsafe(queue.put_nowait, ("done", (last, citations)))
         except Exception as e:
             loop.call_soon_threadsafe(queue.put_nowait, ("error", str(e)))
-    
+
     threading.Thread(target=producer, daemon=True).start()
-    
+
     # 2. Content delta chunks
     citations_text = ""
     while True:
@@ -1229,7 +1231,7 @@ async def stream_openai_response(
                 ],
             )
             yield f"data: {delta_chunk.model_dump_json()}\n\n"
-            
+
         elif kind == "error":
             logging.error(f"Stream error: {payload}")
             # Send error as content
@@ -1250,7 +1252,7 @@ async def stream_openai_response(
         else:  # done - payload is (answer, citations)
             _, citations_text = payload
             break
-    
+
     # Stream citations if available
     if citations_text:
         citation_chunk = OpenAIStreamResponse(
@@ -1266,7 +1268,7 @@ async def stream_openai_response(
             ],
         )
         yield f"data: {citation_chunk.model_dump_json()}\n\n"
-    
+
     # 3. Final chunk with finish_reason
     final_chunk = OpenAIStreamResponse(
         id=response_id,
@@ -1281,10 +1283,10 @@ async def stream_openai_response(
         ],
     )
     yield f"data: {final_chunk.model_dump_json()}\n\n"
-    
+
     # 4. [DONE] marker
     yield "data: [DONE]\n\n"
-    
+
     logging.info("OpenAI stream complete")
 
 

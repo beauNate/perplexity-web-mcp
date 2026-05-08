@@ -14,7 +14,6 @@ from fastmcp import FastMCP
 from perplexity_web_mcp.models import Models
 from perplexity_web_mcp.shared import (
     COUNCIL_DISPLAY_NAMES,
-    MODEL_MAP,
     THINKING_TOGGLEABLE,
     ModelName,
     SourceFocusName,
@@ -25,7 +24,6 @@ from perplexity_web_mcp.shared import (
     smart_ask,
 )
 from perplexity_web_mcp.token_store import load_token, save_token
-
 
 
 mcp = FastMCP(

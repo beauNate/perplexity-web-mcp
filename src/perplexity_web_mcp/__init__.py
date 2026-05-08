@@ -4,6 +4,7 @@ from importlib import metadata
 
 from .config import ClientConfig, ConversationConfig
 from .core import Conversation, Perplexity
+from .council import CouncilMemberResult, CouncilResponse
 from .enums import CitationMode, LogLevel, SearchFocus, SourceFocus, TimeRange
 from .exceptions import (
     AuthenticationError,
@@ -18,7 +19,6 @@ from .exceptions import (
 )
 from .models import Model, Models
 from .rate_limits import RateLimitCache, RateLimits, SourceLimit, UserSettings, fetch_rate_limits, fetch_user_settings
-from .council import CouncilMemberResult, CouncilResponse
 from .router import Intent, QuotaLevel, QuotaState, RoutingDecision, SmartResponse, SmartRouter
 from .shared import council_ask, smart_ask
 from .types import Coordinates, Response, SearchResultItem
@@ -49,12 +49,12 @@ __all__: list[str] = [
     "QuotaLevel",
     "QuotaState",
     "RateLimitCache",
-    "RateLimits",
     "RateLimitError",
+    "RateLimits",
     "ResearchClarifyingQuestionsError",
-    "RoutingDecision",
     "Response",
     "ResponseParsingError",
+    "RoutingDecision",
     "SearchFocus",
     "SearchResultItem",
     "SmartResponse",

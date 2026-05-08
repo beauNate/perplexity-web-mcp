@@ -9,12 +9,11 @@ at the actual source modules, not at doctor module level.
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock as _MagicMock  # AITool removed, using mock
 
 import pytest
 
 from perplexity_web_mcp.cli.doctor import cmd_doctor
-from unittest.mock import MagicMock as _MagicMock  # AITool removed, using mock
-from perplexity_web_mcp.cli.skill import SKILL_DIR_NAME, SkillTarget
 from perplexity_web_mcp.rate_limits import RateLimits
 
 

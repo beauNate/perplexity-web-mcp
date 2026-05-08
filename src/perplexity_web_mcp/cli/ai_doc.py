@@ -7,6 +7,7 @@ models, auth workflows, and error recovery.
 
 from __future__ import annotations
 
+
 AI_DOC = """\
 ================================================================================
 PERPLEXITY WEB MCP - AI REFERENCE

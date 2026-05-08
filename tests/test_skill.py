@@ -13,8 +13,6 @@ import pytest
 from perplexity_web_mcp.cli.skill import (
     SKILL_DIR_NAME,
     SkillTarget,
-    _find_skill_source,
-    _get_current_version,
     _get_installed_version,
     _install_skill,
     _uninstall_skill,

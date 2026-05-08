@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from os import PathLike  # noqa: TC003
+from os import PathLike
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict

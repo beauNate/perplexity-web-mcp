@@ -8,7 +8,7 @@ Both the MCP server (mcp/server.py) and CLI (cli/main.py) import from here.
 from __future__ import annotations
 
 from threading import Lock
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 from .config import ClientConfig, ConversationConfig
 from .core import Perplexity
@@ -434,7 +434,7 @@ def council_ask(
     synthesize: bool = True,
     thinking: bool = False,
     synthesis_model: Model | None = None,
-) -> "CouncilResponse":
+) -> CouncilResponse:
     """Query multiple models in parallel and optionally synthesize results.
 
     Args:
@@ -449,7 +449,7 @@ def council_ask(
     Returns:
         CouncilResponse with individual results and optional synthesis.
     """
-    from .council import CouncilResponse, council_ask as _council_ask
+    from .council import council_ask as _council_ask
 
     return _council_ask(
         query=query,

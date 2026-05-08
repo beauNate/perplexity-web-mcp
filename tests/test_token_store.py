@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-import perplexity_web_mcp.token_store as token_store
+from perplexity_web_mcp import token_store
 
 
 @pytest.fixture

@@ -303,6 +303,7 @@ class TestCmdCouncil:
     @patch("perplexity_web_mcp.council.council_ask")
     def test_json_output(self, mock_council: MagicMock, capsys: pytest.CaptureFixture) -> None:
         import orjson
+
         from perplexity_web_mcp.council import CouncilMemberResult, CouncilResponse
 
         mock_council.return_value = CouncilResponse(

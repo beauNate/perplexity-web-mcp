@@ -35,14 +35,14 @@ class TestMappings:
         assert set(MODEL_MAP.keys()) == expected
 
     def test_model_names_matches_map_keys(self) -> None:
-        assert MODEL_NAMES == list(MODEL_MAP.keys())
+        assert list(MODEL_MAP.keys()) == MODEL_NAMES
 
     def test_source_focus_map_has_all_expected_keys(self) -> None:
         expected = {"none", "web", "academic", "social", "finance", "all"}
         assert set(SOURCE_FOCUS_MAP.keys()) == expected
 
     def test_source_focus_names_matches_map_keys(self) -> None:
-        assert SOURCE_FOCUS_NAMES == list(SOURCE_FOCUS_MAP.keys())
+        assert list(SOURCE_FOCUS_MAP.keys()) == SOURCE_FOCUS_NAMES
 
     def test_every_model_tuple_has_model_instances(self) -> None:
         for name, (base, thinking) in MODEL_MAP.items():
@@ -460,7 +460,7 @@ class TestTokenRetryOnAuthError:
         self, mock_client_fn: MagicMock, mock_reset: MagicMock,
         mock_load: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
     ) -> None:
-        import perplexity_web_mcp.shared as shared
+        from perplexity_web_mcp import shared
         shared._client_token = "old-stale-token"
 
         mock_conv_fail = MagicMock()
@@ -486,7 +486,7 @@ class TestTokenRetryOnAuthError:
         self, mock_client_fn: MagicMock, mock_reset: MagicMock,
         mock_load: MagicMock, mock_limits: MagicMock,
     ) -> None:
-        import perplexity_web_mcp.shared as shared
+        from perplexity_web_mcp import shared
         shared._client_token = "same-token"
 
         mock_client = MagicMock()
@@ -504,7 +504,7 @@ class TestTokenRetryOnAuthError:
         self, mock_client_fn: MagicMock, mock_reset: MagicMock,
         mock_load: MagicMock, mock_cache: MagicMock,
     ) -> None:
-        import perplexity_web_mcp.shared as shared
+        from perplexity_web_mcp import shared
         shared._client_token = "old-stale-token"
 
         mock_conv_fail = MagicMock()

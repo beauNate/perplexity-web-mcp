@@ -14,7 +14,8 @@ from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
-from perplexity_web_mcp.token_store import load_token, save_token as save_token_to_config
+from perplexity_web_mcp.token_store import load_token
+from perplexity_web_mcp.token_store import save_token as save_token_to_config
 
 
 BASE_URL: str = "https://www.perplexity.ai"
@@ -33,7 +34,7 @@ class SubscriptionTier(Enum):
     UNKNOWN = "unknown"
 
     @classmethod
-    def from_api(cls, tier_str: str | None) -> "SubscriptionTier":
+    def from_api(cls, tier_str: str | None) -> SubscriptionTier:
         """Convert API string to enum."""
         if tier_str is None or tier_str == "none":
             return cls.FREE
@@ -59,7 +60,7 @@ class UserInfo:
     image: str | None = None
 
     @classmethod
-    def from_api(cls, data: dict) -> "UserInfo":
+    def from_api(cls, data: dict) -> UserInfo:
         """Create from API response."""
         return cls(
             id=data.get("id", ""),
@@ -264,33 +265,33 @@ def auth_non_interactive(email: str, code: str | None = None, auto_save: bool = 
     """
     try:
         session, csrf = _initialize_session()
-        
+
         if code is None:
             # Step 1: Send verification code
             _request_verification_code(session, csrf, email)
             print(f"Verification code sent to {email}")
             print("Check email and run: pwm-auth --email EMAIL --code CODE")
             return None
-        
+
         # Step 2: Complete authentication
         redirect_url = _validate_and_get_redirect_url(session, email, code)
         token = _extract_session_token(session, redirect_url)
-        
+
         # Verify token works
         user_info = get_user_info(token)
         if user_info:
             print(f"Authenticated as: {user_info.email} ({user_info.tier_display})")
-        
+
         if auto_save:
             if save_token_to_config(token):
                 print("Token saved to ~/.config/perplexity-web-mcp/token")
             else:
                 print("Warning: Failed to save token to config")
-        
+
         # Output token for capture
         print(f"TOKEN={token}")
         return token
-        
+
     except Exception as e:
         print(f"Error: {e}")
         return None
@@ -299,10 +300,10 @@ def auth_non_interactive(email: str, code: str | None = None, auto_save: bool = 
 def main() -> NoReturn:
     """Executes the authentication flow."""
     import sys
-    
+
     # Check for non-interactive mode (CLI args)
     args = sys.argv[1:]
-    
+
     if "--help" in args or "-h" in args:
         console.print(Panel(
             "[bold white]pwm-auth[/bold white] - Perplexity Web MCP Authentication\n\n"
@@ -340,7 +341,7 @@ def main() -> NoReturn:
             console.print("[red]Not authenticated.[/red] No saved token found.")
             console.print("Run [bold]pwm-auth[/bold] to log in.")
             exit(1)
-        
+
         user_info = get_user_info(token)
         if user_info:
             console.print("[bold green]Authenticated[/bold green]\n")
@@ -355,21 +356,21 @@ def main() -> NoReturn:
         # Non-interactive mode for AI agents
         email_idx = args.index("--email")
         email = args[email_idx + 1] if email_idx + 1 < len(args) else None
-        
+
         code = None
         if "--code" in args:
             code_idx = args.index("--code")
             code = args[code_idx + 1] if code_idx + 1 < len(args) else None
-        
+
         no_save = "--no-save" in args
-        
+
         if not email:
             print("Error: --email requires an email address")
             exit(1)
-        
+
         result = auth_non_interactive(email, code, auto_save=not no_save)
         exit(0 if result or code is None else 1)
-    
+
     # Interactive mode (original behavior)
     try:
         _show_header()

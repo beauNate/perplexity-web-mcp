@@ -15,7 +15,7 @@ import pytest
 from perplexity_web_mcp.config import ClientConfig, ConversationConfig
 from perplexity_web_mcp.core import Conversation, Perplexity
 from perplexity_web_mcp.enums import CitationMode, SearchFocus, SourceFocus, TimeRange
-from perplexity_web_mcp.exceptions import FileValidationError, ResponseParsingError, ResearchClarifyingQuestionsError
+from perplexity_web_mcp.exceptions import FileValidationError, ResearchClarifyingQuestionsError, ResponseParsingError
 from perplexity_web_mcp.models import Models
 from perplexity_web_mcp.types import Response, SearchResultItem
 
@@ -218,7 +218,6 @@ class TestBuildPayload:
         assert payload["params"]["sources"] == ["web", "scholar"]
 
     def test_followup_includes_uuid_and_token(self) -> None:
-        from perplexity_web_mcp.types import Coordinates
 
         conv = self._conv()
         conv._backend_uuid = "uuid-123"

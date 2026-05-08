@@ -9,16 +9,16 @@ Test categories:
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pytest
 
 from perplexity_web_mcp.resilience import (
     BROWSER_PROFILES,
-    RetryConfig,
     RateLimiter,
+    RetryConfig,
     create_retry_decorator,
     get_random_browser_profile,
 )

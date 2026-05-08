@@ -10,6 +10,7 @@ import logging
 from os import environ
 from pathlib import Path
 
+
 # Use stdlib logging to avoid circular import with .logging module
 _logger = logging.getLogger(__name__)
 
@@ -56,12 +57,12 @@ def load_token() -> str | None:
                 return token
     except Exception as exc:
         _logger.debug(f"Could not read token file {TOKEN_FILE}: {exc}")
-    
+
     # Fall back to environment variable
     env_token = environ.get(ENV_KEY)
     if env_token:
         return env_token
-    
+
     return None
 
 

@@ -14,7 +14,6 @@ import subprocess
 import sys
 import time
 import urllib.request
-from typing import NoReturn
 
 
 def _get_free_port() -> int:
@@ -113,7 +112,7 @@ def _hack_claude(args: list[str]) -> int:
 
         # 4. Prepare environment variables
         env = os.environ.copy()
-        
+
         # Clear out any existing Anthropic/Claude/Vertex variables to prevent conflicts
         # (e.g., CLAUDE_CODE_USE_VERTEX or ANTHROPIC_VERTEX_PROJECT_ID)
         for key in list(env.keys()):
@@ -151,7 +150,7 @@ def _hack_claude(args: list[str]) -> int:
         finally:
             if original_settings is not None:
                 settings_path.write_bytes(original_settings)
-        
+
         return result.returncode
 
     finally:

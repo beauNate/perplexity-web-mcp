@@ -12,17 +12,18 @@ Usage:
 
 import json
 import os
+from pathlib import Path
 import platform
 import shutil
 import subprocess
-import tomllib
-from pathlib import Path
 
-import rich_click as click
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
 from rich.syntax import Syntax
 from rich.table import Table
+import rich_click as click
+import tomllib
+
 
 console = Console()
 
@@ -449,18 +450,17 @@ def _setup_json() -> None:
             "command": "uvx",
             "args": ["--from", MCP_PACKAGE, MCP_SERVER_CMD],
         }
+    elif use_full_path:
+        binary_path = _find_mcp_server_path()
+        if not binary_path:
+            console.print(
+                f"\n[yellow]Warning:[/yellow] {MCP_SERVER_CMD} not found in PATH, "
+                "using command name instead"
+            )
+            binary_path = MCP_SERVER_CMD
+        server_entry = {"command": binary_path}
     else:
-        if use_full_path:
-            binary_path = _find_mcp_server_path()
-            if not binary_path:
-                console.print(
-                    f"\n[yellow]Warning:[/yellow] {MCP_SERVER_CMD} not found in PATH, "
-                    "using command name instead"
-                )
-                binary_path = MCP_SERVER_CMD
-            server_entry = {"command": binary_path}
-        else:
-            server_entry = {"command": MCP_SERVER_CMD}
+        server_entry = {"command": MCP_SERVER_CMD}
 
     if config_scope == "new":
         output = {"mcpServers": {MCP_SERVER_KEY: server_entry}}
@@ -731,9 +731,8 @@ def _remove_all() -> None:
         elif client_id == "opencode":
             if _remove_opencode():
                 removed_count += 1
-        else:
-            if _remove_json_client(client_id):
-                removed_count += 1
+        elif _remove_json_client(client_id):
+            removed_count += 1
 
     console.print(f"\n[green]✓ Removed from {removed_count} tool(s)[/green]")
     if removed_count > 0:
