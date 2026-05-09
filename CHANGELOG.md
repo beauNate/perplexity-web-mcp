@@ -8,12 +8,26 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ### Added
 
-- **Multi-Turn Conversational Context** — Added persistent session management using UUIDs to track and maintain conversational context across multiple queries. All query tools (CLI and MCP) now accept an optional `conversation_id` parameter and return a UUID for tracking the session. State is retained in memory by the MCP server for 1 hour.
+- **Multi-Turn Conversational Context** — Added persistent session management using UUIDs to track and maintain conversational context across multiple queries. All query tools (CLI and MCP) now accept an optional `conversation_id` parameter and return a UUID for tracking the session. State is retained in memory by the MCP server for 1 hour (Resolves #6).
 - **AI Docs Update** — Updated `pwm --ai` and `CLAUDE.md` to document the new multi-turn context features.
+- **README Update** — Updated `README.md` with a new video preview.
+
+### Fixed
+
+- **403 Access Forbidden** — Fixed widespread 403 Forbidden errors by bumping the `curl-cffi` dependency minimum version to `>=0.15.0` (Resolves #5).
+- **Deep Research Timeouts** — Fixed `pplx_deep_research` timing out via MCP and improved CLI UX for long-running queries (Resolves #2).
 
 ### Changed
 
 - **Code Cleanup** — Fixed UnboundLocalError risk in `smart_ask()`, ensured consistent import styles, and cleaned up trailing whitespaces.
+
+---
+
+## [0.10.8] - 2026-04-29
+
+### Fixed
+
+- **Claude Desktop Setup** — Added `claude-desktop` to `CLIENT_REGISTRY` to fix setup and installation issues.
 
 ---
 
