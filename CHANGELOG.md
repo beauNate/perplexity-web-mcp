@@ -4,6 +4,19 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.11.0] - 2026-05-09
+
+### Added
+
+- **Multi-Turn Conversational Context** — Added persistent session management using UUIDs to track and maintain conversational context across multiple queries. All query tools (CLI and MCP) now accept an optional `conversation_id` parameter and return a UUID for tracking the session. State is retained in memory by the MCP server for 1 hour.
+- **AI Docs Update** — Updated `pwm --ai` and `CLAUDE.md` to document the new multi-turn context features.
+
+### Changed
+
+- **Code Cleanup** — Fixed UnboundLocalError risk in `smart_ask()`, ensured consistent import styles, and cleaned up trailing whitespaces.
+
+---
+
 ## [0.10.7] - 2026-04-27
 
 ### Changed
