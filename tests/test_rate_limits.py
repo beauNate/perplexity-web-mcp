@@ -34,6 +34,7 @@ from perplexity_web_mcp.token_store import load_token
 # Fixtures: realistic API response payloads
 # ============================================================================
 
+
 @pytest.fixture
 def rate_limit_api_response() -> dict:
     """Realistic /rest/rate-limit/all response (based on live capture)."""
@@ -119,6 +120,7 @@ def healthy_limits() -> RateLimits:
 # 1. Data Model Parsing - RateLimits
 # ============================================================================
 
+
 class TestRateLimitsFromApi:
     """Test RateLimits.from_api() with various inputs."""
 
@@ -186,13 +188,7 @@ class TestRateLimitsFromApi:
 
     def test_parse_only_sources_no_counts(self) -> None:
         """If top-level counts are missing, they default to 0."""
-        data = {
-            "sources": {
-                "source_to_limit": {
-                    "web": {"monthly_limit": None, "remaining": None}
-                }
-            }
-        }
+        data = {"sources": {"source_to_limit": {"web": {"monthly_limit": None, "remaining": None}}}}
         limits = RateLimits.from_api(data)
         assert limits.remaining_pro == 0
         assert len(limits.source_limits) == 1
@@ -201,6 +197,7 @@ class TestRateLimitsFromApi:
 # ============================================================================
 # 2. Data Model Parsing - UserSettings
 # ============================================================================
+
 
 class TestUserSettingsFromApi:
     """Test UserSettings.from_api() with various inputs."""
@@ -273,6 +270,7 @@ class TestUserSettingsFromApi:
 # 3. Data Model Parsing - SourceLimit
 # ============================================================================
 
+
 class TestSourceLimit:
     """Test SourceLimit properties."""
 
@@ -310,6 +308,7 @@ class TestSourceLimit:
 # ============================================================================
 # 4. Properties and Formatting
 # ============================================================================
+
 
 class TestRateLimitsProperties:
     """Test RateLimits boolean properties and formatting."""
@@ -386,6 +385,7 @@ class TestUserSettingsFormatting:
 # 5. ConnectorLimits
 # ============================================================================
 
+
 class TestConnectorLimits:
     """Test ConnectorLimits defaults and parsing."""
 
@@ -405,6 +405,7 @@ class TestConnectorLimits:
 # ============================================================================
 # 6. RateLimitCache - Unit Tests (mocked fetching)
 # ============================================================================
+
 
 class TestRateLimitCache:
     """Test cache behavior with mocked network calls."""
@@ -591,6 +592,7 @@ class TestRateLimitCache:
 # 7. MCP Server Helpers (unit tests with mocking)
 # ============================================================================
 
+
 class TestMCPServerHelpers:
     """Test _is_research_model and _check_limits_before_query."""
 
@@ -688,6 +690,7 @@ class TestMCPServerHelpers:
 # ============================================================================
 # 8. Integration Tests (live API calls - require valid token)
 # ============================================================================
+
 
 def _has_valid_token() -> bool:
     """Check if a valid token is available for integration tests."""

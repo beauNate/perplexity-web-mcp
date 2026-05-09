@@ -90,6 +90,7 @@ class UserInfo:
 def get_user_info(token: str) -> UserInfo | None:
     """Fetch user info from Perplexity API."""
     import logging
+
     _logger = logging.getLogger(__name__)
 
     try:
@@ -105,7 +106,6 @@ def get_user_info(token: str) -> UserInfo | None:
     except Exception as exc:
         _logger.debug(f"get_user_info failed: {exc}")
     return None
-
 
 
 def _initialize_session() -> tuple[Session, str]:
@@ -247,19 +247,19 @@ def _show_exit_message() -> None:
 
 def auth_non_interactive(email: str, code: str | None = None, auto_save: bool = True) -> str | None:
     """Non-interactive authentication for AI agents.
-    
+
     Args:
         email: Perplexity account email
         code: 6-digit verification code (if None, sends code and returns None)
         auto_save: Whether to automatically save token to config
-        
+
     Returns:
         Session token if code provided, None if code was sent
-        
+
     Usage:
         # Step 1: Request verification code
         pwm-auth --email user@example.com
-        
+
         # Step 2: Complete auth with code from email
         pwm-auth --email user@example.com --code 123456
     """
@@ -305,33 +305,35 @@ def main() -> NoReturn:
     args = sys.argv[1:]
 
     if "--help" in args or "-h" in args:
-        console.print(Panel(
-            "[bold white]pwm-auth[/bold white] - Perplexity Web MCP Authentication\n\n"
-            "[bold cyan]Usage:[/bold cyan]\n"
-            "  pwm-auth                              Interactive login (email + code)\n"
-            "  pwm-auth --check                      Check current auth status\n"
-            "  pwm-auth --email EMAIL                Send verification code to email\n"
-            "  pwm-auth --email EMAIL --code CODE    Complete auth with code\n"
-            "  pwm-auth --help                       Show this help message\n\n"
-            "[bold cyan]Options:[/bold cyan]\n"
-            "  --check          Check if authenticated without logging in\n"
-            "  --email EMAIL    Email address for non-interactive auth\n"
-            "  --code CODE      6-digit verification code from email\n"
-            "  --no-save        Don't save token to config (non-interactive only)\n"
-            "  -h, --help       Show this help message\n\n"
-            "[bold cyan]Token Storage:[/bold cyan]\n"
-            "  ~/.config/perplexity-web-mcp/token\n\n"
-            "[bold cyan]Examples:[/bold cyan]\n"
-            "  [dim]# Interactive login[/dim]\n"
-            "  pwm-auth\n\n"
-            "  [dim]# Check if already logged in[/dim]\n"
-            "  pwm-auth --check\n\n"
-            "  [dim]# Non-interactive (for AI agents)[/dim]\n"
-            "  pwm-auth --email user@example.com\n"
-            "  pwm-auth --email user@example.com --code 123456",
-            title="Help",
-            border_style="cyan",
-        ))
+        console.print(
+            Panel(
+                "[bold white]pwm-auth[/bold white] - Perplexity Web MCP Authentication\n\n"
+                "[bold cyan]Usage:[/bold cyan]\n"
+                "  pwm-auth                              Interactive login (email + code)\n"
+                "  pwm-auth --check                      Check current auth status\n"
+                "  pwm-auth --email EMAIL                Send verification code to email\n"
+                "  pwm-auth --email EMAIL --code CODE    Complete auth with code\n"
+                "  pwm-auth --help                       Show this help message\n\n"
+                "[bold cyan]Options:[/bold cyan]\n"
+                "  --check          Check if authenticated without logging in\n"
+                "  --email EMAIL    Email address for non-interactive auth\n"
+                "  --code CODE      6-digit verification code from email\n"
+                "  --no-save        Don't save token to config (non-interactive only)\n"
+                "  -h, --help       Show this help message\n\n"
+                "[bold cyan]Token Storage:[/bold cyan]\n"
+                "  ~/.config/perplexity-web-mcp/token\n\n"
+                "[bold cyan]Examples:[/bold cyan]\n"
+                "  [dim]# Interactive login[/dim]\n"
+                "  pwm-auth\n\n"
+                "  [dim]# Check if already logged in[/dim]\n"
+                "  pwm-auth --check\n\n"
+                "  [dim]# Non-interactive (for AI agents)[/dim]\n"
+                "  pwm-auth --email user@example.com\n"
+                "  pwm-auth --email user@example.com --code 123456",
+                title="Help",
+                border_style="cyan",
+            )
+        )
         exit(0)
 
     if "--check" in args:

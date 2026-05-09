@@ -151,7 +151,7 @@ class Conversation:
 
     def restore_session(self, backend_uuid: str, read_write_token: str | None = None) -> None:
         """Inject prior session state to enable follow-up queries.
-        
+
         Args:
             backend_uuid: The conversation UUID from Perplexity
             read_write_token: The token required for updating the conversation
@@ -169,7 +169,7 @@ class Conversation:
         init_query: str | None = None,
     ) -> Conversation:
         """Ask a question. Returns self for method chaining or streaming iteration.
-        
+
         Args:
             query: The full query to send to the model
             model: Optional model override
@@ -196,7 +196,7 @@ class Conversation:
         init_query: str | None = None,
     ) -> None:
         """Execute a query.
-        
+
         Args:
             query: The full query to send to the model (via POST body)
             model: The model to use
@@ -384,7 +384,7 @@ class Conversation:
             "model_preference": model.identifier,
             "mode": model.mode,
             "search_focus": cfg.search_focus.value,
-            "search_recency_filter": cfg.time_range.value if cfg.time_range.value else None,
+            "search_recency_filter": cfg.time_range.value or None,
             "is_incognito": not cfg.save_to_library,
             "use_schematized_api": USE_SCHEMATIZED_API,
             "local_search_enabled": cfg.coordinates is not None,
@@ -456,7 +456,9 @@ class Conversation:
             raise ResponseParsingError("Missing 'text' field in data", raw_data=str(data)) from error
         except JSONDecodeError as error:
             print("ERROR DATA:", data.get("text"))
-            raise ResponseParsingError("Invalid JSON in 'text' field", raw_data=str(data.get("text", ""))[:500]) from error
+            raise ResponseParsingError(
+                "Invalid JSON in 'text' field", raw_data=str(data.get("text", ""))[:500]
+            ) from error
 
         answer_data: dict[str, Any] = {}
 

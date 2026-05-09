@@ -33,9 +33,7 @@ class TestCouncilMemberResult:
         assert result.search_results == []
 
     def test_error_result(self) -> None:
-        result = CouncilMemberResult(
-            model_name="Claude", answer="[Error]", error="Network failure"
-        )
+        result = CouncilMemberResult(model_name="Claude", answer="[Error]", error="Network failure")
         assert result.error == "Network failure"
 
     def test_is_frozen(self) -> None:
@@ -84,9 +82,7 @@ class TestCouncilResponse:
     def test_format_response_marks_errors(self) -> None:
         results = [
             CouncilMemberResult(model_name="GPT-5.4", answer="OK"),
-            CouncilMemberResult(
-                model_name="Claude", answer="[Error]", error="timeout"
-            ),
+            CouncilMemberResult(model_name="Claude", answer="[Error]", error="timeout"),
         ]
         response = CouncilResponse(
             individual_results=results,
@@ -201,7 +197,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_queries_all_models_in_parallel(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Test answer"
@@ -221,7 +220,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_custom_models(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Custom answer"
@@ -243,7 +245,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_synthesis_runs_when_enabled(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Model answer"
@@ -262,7 +267,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_no_synthesis_when_disabled(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Answer"
@@ -278,7 +286,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_partial_failure_still_returns_results(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """If one model fails, others should still return successfully."""
         call_count = 0
@@ -311,7 +322,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_insufficient_successes_skips_synthesis(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """Synthesis requires at least 2 successful responses."""
         mock_client = MagicMock()
@@ -339,7 +353,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_preserves_original_model_order(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """Results should be sorted to match the original model order."""
         mock_conv = MagicMock()
@@ -360,7 +377,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_thinking_true_uses_thinking_defaults(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """thinking=True with no custom models should use COUNCIL_DEFAULT_MODELS_THINKING."""
         mock_conv = MagicMock()
@@ -382,7 +402,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_thinking_false_uses_base_defaults(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """thinking=False (default) should use COUNCIL_DEFAULT_MODELS."""
         mock_conv = MagicMock()
@@ -402,7 +425,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_thinking_ignored_when_custom_models_provided(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """When custom models are provided, thinking flag is ignored (caller resolves)."""
         mock_conv = MagicMock()
@@ -422,7 +448,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_custom_synthesis_model(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """synthesis_model overrides default Sonar for synthesis."""
         configs_used: list[Model] = []
@@ -447,7 +476,10 @@ class TestCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_default_synthesis_uses_sonar(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         """Default synthesis (no synthesis_model) uses Sonar."""
         configs_used: list[Model] = []
@@ -480,7 +512,10 @@ class TestSharedCouncilAsk:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_shared_wrapper_delegates(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         from perplexity_web_mcp.shared import council_ask as shared_council_ask
 

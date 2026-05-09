@@ -63,4 +63,3 @@ class Models:
 
     KIMI_K2_6_THINKING = Model(identifier="kimik26thinking")
     """Kimi K2.6 Thinking - Moonshot AI's latest model (thinking)."""
-

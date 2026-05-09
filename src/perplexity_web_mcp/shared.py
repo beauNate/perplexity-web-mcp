@@ -54,8 +54,16 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
 
 SourceFocusName = Literal["none", "web", "academic", "social", "finance", "all"]
 ModelName = Literal[
-    "auto", "sonar", "deep_research", "gpt54", "gpt55", "claude_sonnet",
-    "claude_opus", "gemini_pro", "nemotron", "kimi_k26",
+    "auto",
+    "sonar",
+    "deep_research",
+    "gpt54",
+    "gpt55",
+    "claude_sonnet",
+    "claude_opus",
+    "gemini_pro",
+    "nemotron",
+    "kimi_k26",
 ]
 
 MODEL_NAMES: list[str] = list(MODEL_MAP.keys())
@@ -74,8 +82,7 @@ COUNCIL_DISPLAY_NAMES: dict[str, str] = {
 }
 
 THINKING_TOGGLEABLE: frozenset[str] = frozenset(
-    name for name, (base, thinking) in MODEL_MAP.items()
-    if thinking is not None and thinking is not base
+    name for name, (base, thinking) in MODEL_MAP.items() if thinking is not None and thinking is not base
 )
 
 
@@ -201,7 +208,9 @@ _session_store = SessionStore()
 
 
 def _execute_query(
-    query: str, model: Model, sources: list[SourceFocus],
+    query: str,
+    model: Model,
+    sources: list[SourceFocus],
     search_focus: SearchFocus = SearchFocus.WEB,
     conversation_id: str | None = None,
 ) -> tuple[str, list[SearchResultItem], str | None]:
@@ -288,9 +297,7 @@ def _format_quota_footer(model: Model) -> str:
             " — prefer pplx_smart_query(intent='quick') or pplx_sonar for simple lookups"
         )
     elif limits.remaining_pro <= 0:
-        parts.append(
-            " | EXHAUSTED: Use pplx_smart_query(intent='quick') or pplx_sonar to avoid failures"
-        )
+        parts.append(" | EXHAUSTED: Use pplx_smart_query(intent='quick') or pplx_sonar to avoid failures")
 
     return "".join(parts)
 
@@ -332,9 +339,7 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web", convers
     from .exceptions import AuthenticationError, RateLimitError
 
     try:
-        answer, search_results, new_conv_id = _execute_with_retry(
-            query, model, source_focus, conversation_id
-        )
+        answer, search_results, new_conv_id = _execute_with_retry(query, model, source_focus, conversation_id)
     except (AuthenticationError, RateLimitError):
         raise
     except Exception as error:
@@ -348,7 +353,7 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web", convers
             response_parts.append(f"\n[{i}]: {url}")
 
     response_parts.append(_format_quota_footer(model))
-    
+
     if new_conv_id:
         response_parts.append(f"\n\n[Conversation ID: {new_conv_id}]")
 
@@ -437,15 +442,11 @@ def smart_ask(
     decision = _router.route(parsed_intent, limits)
 
     try:
-        answer, search_results, new_conv_id = _execute_with_retry(
-            query, decision.model, source_focus, conversation_id
-        )
+        answer, search_results, new_conv_id = _execute_with_retry(query, decision.model, source_focus, conversation_id)
     except (AuthenticationError, RateLimitError):
         raise
     except Exception as error:
-        return SmartResponse(
-            answer=_format_error(error), citations=[], routing=decision, conversation_id=None
-        )
+        return SmartResponse(answer=_format_error(error), citations=[], routing=decision, conversation_id=None)
 
     citations = [r.url or "" for r in search_results]
     return SmartResponse(answer=answer, citations=citations, routing=decision, conversation_id=new_conv_id)
@@ -454,6 +455,7 @@ def smart_ask(
 # ---------------------------------------------------------------------------
 # Council ask (multi-model parallel query with synthesis)
 # ---------------------------------------------------------------------------
+
 
 def council_ask(
     query: str,

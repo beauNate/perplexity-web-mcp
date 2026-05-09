@@ -8,8 +8,8 @@ the MCP tool wrappers and auth tools (which are MCP-specific).
 from __future__ import annotations
 
 import threading
-import uuid
 from time import monotonic
+import uuid
 
 from fastmcp import FastMCP
 
@@ -32,13 +32,11 @@ mcp = FastMCP(
     "perplexity-web-mcp",
     instructions=(
         "Search the web with Perplexity AI. QUOTA IS LIMITED — read these rules.\n\n"
-
         "COST MODEL (critical):\n"
         "- pplx_sonar / pplx_smart_query(intent='quick'): Sonar 2 (in-house). Still uses your "
         "Perplexity session; limits depend on your plan — call pplx_usage() first.\n"
         "- pplx_ask / pplx_query / all model-specific tools: 1 PRO SEARCH each (weekly pool)\n"
         "- pplx_deep_research: 1 DEEP RESEARCH each (small monthly pool, ~5-10 total)\n\n"
-
         "MANDATORY PROTOCOL:\n"
         "1. On your FIRST query of the session, call pplx_usage() to check remaining quotas.\n"
         "2. DEFAULT to pplx_smart_query(intent='quick') for most lookups — it prefers Sonar 2 "
@@ -50,16 +48,13 @@ mcp = FastMCP(
         "use pplx_deep_research_start and poll with pplx_research_status instead.\n"
         "5. Avoid model-specific tools (pplx_gpt54, pplx_claude_sonnet, etc.) unless the "
         "user explicitly requests a specific model. Each call costs 1 Pro Search query.\n\n"
-
         "WHEN TO USE EACH INTENT:\n"
         "- quick: Facts, definitions, 'what is X', current date/weather, simple lookups\n"
         "- standard: How-to questions, comparisons, explanations needing web sources\n"
         "- detailed: Complex analysis, multi-source synthesis, technical deep-dives\n"
         "- research: Comprehensive reports (only when user explicitly asks for research)\n\n"
-
         "All tools support source_focus: none, web, academic, social, finance, all.\n"
         "Use source_focus='none' for model-only queries without web search.\n\n"
-
         "AUTHENTICATION: If you get a 403 error or 'token expired' message:\n"
         "1. pplx_auth_status — check current authentication status\n"
         "2. pplx_auth_request_code — send verification code to email\n"
@@ -208,7 +203,9 @@ def pplx_claude_sonnet(query: str, source_focus: SourceFocusName = "web", conver
 
 
 @mcp.tool
-def pplx_claude_sonnet_think(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
+def pplx_claude_sonnet_think(
+    query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None
+) -> str:
     """Claude Sonnet 4.6 Thinking — Anthropic's fast model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.CLAUDE_46_SONNET_THINKING, source_focus, conversation_id)
 
@@ -220,7 +217,9 @@ def pplx_claude_opus(query: str, source_focus: SourceFocusName = "web", conversa
 
 
 @mcp.tool
-def pplx_claude_opus_think(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
+def pplx_claude_opus_think(
+    query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None
+) -> str:
     """Claude Opus 4.7 Thinking — Anthropic's most advanced reasoning model with extended thinking. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
     return ask(query, Models.CLAUDE_47_OPUS_THINKING, source_focus, conversation_id)
 
@@ -232,7 +231,9 @@ def pplx_gemini_pro_think(query: str, source_focus: SourceFocusName = "web", con
 
 
 @mcp.tool
-def pplx_nemotron_thinking(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
+def pplx_nemotron_thinking(
+    query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None
+) -> str:
     """Nemotron 3 Super — NVIDIA's Nemotron 3 Super 120B model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.NEMOTRON_3_SUPER, source_focus, conversation_id)
 
@@ -244,7 +245,9 @@ def pplx_kimi_k26(query: str, source_focus: SourceFocusName = "web", conversatio
 
 
 @mcp.tool
-def pplx_kimi_k26_thinking(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
+def pplx_kimi_k26_thinking(
+    query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None
+) -> str:
     """Kimi K2.6 Thinking — Moonshot's advanced model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
     return ask(query, Models.KIMI_K2_6_THINKING, source_focus, conversation_id)
 
@@ -357,10 +360,7 @@ def pplx_usage(refresh: bool = False) -> str:
     """
     token = load_token()
     if not token:
-        return (
-            "NOT AUTHENTICATED\n\n"
-            "No session token found. Authenticate first with pplx_auth_request_code."
-        )
+        return "NOT AUTHENTICATED\n\nNo session token found. Authenticate first with pplx_auth_request_code."
 
     cache = get_limit_cache()
     if cache is None:
@@ -404,11 +404,7 @@ _AUTH_SESSION_TTL: float = 600.0
 
 def _get_auth_session(email: str) -> dict | None:
     """Get stored auth session if it matches the email and is still fresh."""
-    if (
-        _auth_session
-        and _auth_session.get("email") == email
-        and (monotonic() - _auth_session_ts) < _AUTH_SESSION_TTL
-    ):
+    if _auth_session and _auth_session.get("email") == email and (monotonic() - _auth_session_ts) < _AUTH_SESSION_TTL:
         return _auth_session
     return None
 

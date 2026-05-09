@@ -48,6 +48,7 @@ COUNCIL_DEFAULT_MODELS_THINKING: list[tuple[str, Model]] = [
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True, slots=True)
 class CouncilMemberResult:
     """Result from a single council member model."""
@@ -93,6 +94,7 @@ class CouncilResponse:
 # ---------------------------------------------------------------------------
 # Internal: query a single model
 # ---------------------------------------------------------------------------
+
 
 def _query_single_model(
     model_name: str,
@@ -156,7 +158,8 @@ Be concise but thorough. Use markdown formatting.\
 
 
 def _build_synthesis_prompt(
-    query: str, results: list[CouncilMemberResult],
+    query: str,
+    results: list[CouncilMemberResult],
 ) -> str:
     """Build the prompt for the synthesis model."""
     sections: list[str] = []
@@ -203,6 +206,7 @@ def _synthesize(
 # Public API
 # ---------------------------------------------------------------------------
 
+
 def council_ask(
     query: str,
     models: list[tuple[str, Model]] | None = None,
@@ -245,7 +249,12 @@ def council_ask(
     with ThreadPoolExecutor(max_workers=len(council)) as executor:
         future_to_name = {
             executor.submit(
-                _query_single_model, name, model, query, sources, search_mode,
+                _query_single_model,
+                name,
+                model,
+                query,
+                sources,
+                search_mode,
             ): name
             for name, model in council
         }

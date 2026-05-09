@@ -32,8 +32,7 @@ def skill_source(tmp_path: Path) -> Path:
     source.mkdir(parents=True)
     skill_md = source / "SKILL.md"
     skill_md.write_text(
-        '---\nname: querying-perplexity\ndescription: "test"\n'
-        'metadata:\n  version: "0.3.0"\n---\n# Test Skill\n'
+        '---\nname: querying-perplexity\ndescription: "test"\nmetadata:\n  version: "0.3.0"\n---\n# Test Skill\n'
     )
     refs = source / "references"
     refs.mkdir()

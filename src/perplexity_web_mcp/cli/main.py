@@ -49,6 +49,7 @@ def _print_ai_docs(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     from perplexity_web_mcp.cli.ai_doc import print_ai_doc
+
     print_ai_doc()
     ctx.exit(0)
 
@@ -63,11 +64,17 @@ def _print_version(ctx, param, value):
 
 
 @click.group(invoke_without_command=True)
-@click.option("--version", "-v", is_flag=True, callback=_print_version,
-              expose_value=False, is_eager=True, help="Show version.")
-@click.option("--ai", is_flag=True, callback=_print_ai_docs,
-              expose_value=False, is_eager=True,
-              help="Print AI-optimized documentation (for LLM agents).")
+@click.option(
+    "--version", "-v", is_flag=True, callback=_print_version, expose_value=False, is_eager=True, help="Show version."
+)
+@click.option(
+    "--ai",
+    is_flag=True,
+    callback=_print_ai_docs,
+    expose_value=False,
+    is_eager=True,
+    help="Print AI-optimized documentation (for LLM agents).",
+)
 @click.pass_context
 def cli(ctx):
     """pwm — Perplexity Web MCP CLI.
@@ -84,15 +91,12 @@ def cli(ctx):
 
 @cli.command()
 @click.argument("query")
-@click.option("-m", "--model", "model_name", default="auto",
-              help=f"Model to use ({', '.join(MODEL_NAMES)}).")
+@click.option("-m", "--model", "model_name", default="auto", help=f"Model to use ({', '.join(MODEL_NAMES)}).")
 @click.option("-t", "--thinking", is_flag=True, help="Enable extended thinking mode.")
-@click.option("-s", "--source", "source", default="web",
-              help=f"Source focus ({', '.join(SOURCE_FOCUS_NAMES)}).")
+@click.option("-s", "--source", "source", default="web", help=f"Source focus ({', '.join(SOURCE_FOCUS_NAMES)}).")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON.")
 @click.option("--no-citations", is_flag=True, help="Suppress citation URLs.")
-@click.option("--intent", default="standard",
-              help="Routing intent: quick, standard, detailed, research.")
+@click.option("--intent", default="standard", help="Routing intent: quick, standard, detailed, research.")
 def ask_cmd(query, model_name, thinking, source, json_output, no_citations, intent):
     """Ask a question using Perplexity AI.
 
@@ -167,8 +171,7 @@ def _cmd_ask_impl(query, model_name, thinking, source, json_output, no_citations
 
 @cli.command()
 @click.argument("query")
-@click.option("-s", "--source", "source", default="web",
-              help=f"Source focus ({', '.join(SOURCE_FOCUS_NAMES)}).")
+@click.option("-s", "--source", "source", default="web", help=f"Source focus ({', '.join(SOURCE_FOCUS_NAMES)}).")
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON.")
 def research(query, source, json_output):
     """Deep research on a topic.
@@ -190,12 +193,14 @@ def _cmd_research_impl(query, source, json_output):
 
     try:
         from rich.console import Console
+
         console = Console(stderr=True)
         with console.status("[bold cyan]Running deep research (this may take several minutes)...[/]"):
             result = ask(query, model, source)
     except (AuthenticationError, RateLimitError) as e:
         if json_output:
             import orjson
+
             error_data = {"error": str(e), "model": "deep_research", "source": source}
             sys.stdout.buffer.write(orjson.dumps(error_data, option=orjson.OPT_INDENT_2))
             sys.stdout.buffer.write(b"\n")
@@ -230,14 +235,21 @@ COUNCIL_MODEL_NAMES = ("gpt54", "gpt55", "claude_sonnet", "claude_opus", "gemini
 
 @cli.command()
 @click.argument("query")
-@click.option("-m", "--models", "models_str", default="gpt54,claude_opus,gemini_pro",
-              help=f"Comma-separated models ({', '.join(COUNCIL_MODEL_NAMES)}).")
+@click.option(
+    "-m",
+    "--models",
+    "models_str",
+    default="gpt54,claude_opus,gemini_pro",
+    help=f"Comma-separated models ({', '.join(COUNCIL_MODEL_NAMES)}).",
+)
 @click.option("-t", "--thinking", is_flag=True, help="Enable extended thinking mode.")
-@click.option("-s", "--source", "source", default="web",
-              help=f"Source focus ({', '.join(SOURCE_FOCUS_NAMES)}).")
+@click.option("-s", "--source", "source", default="web", help=f"Source focus ({', '.join(SOURCE_FOCUS_NAMES)}).")
 @click.option("--no-synthesis", is_flag=True, help="Skip consensus synthesis.")
-@click.option("--chairman", default="sonar",
-              help=f"Synthesis model (default: sonar / Sonar 2). Non-sonar costs 1 extra Pro Search. ({', '.join(MODEL_NAMES)})")
+@click.option(
+    "--chairman",
+    default="sonar",
+    help=f"Synthesis model (default: sonar / Sonar 2). Non-sonar costs 1 extra Pro Search. ({', '.join(MODEL_NAMES)})",
+)
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON.")
 def council(query, models_str, thinking, source, no_synthesis, chairman, json_output):
     """Query multiple models in parallel (Model Council).
@@ -267,7 +279,9 @@ def _cmd_council_impl(query, models_str, source, synthesize, json_output, thinki
     model_names = [m.strip() for m in models_str.split(",") if m.strip()]
     for name in model_names:
         if name not in COUNCIL_MODEL_NAMES:
-            print(f"Error: Unknown council model '{name}'. Available: {', '.join(COUNCIL_MODEL_NAMES)}", file=sys.stderr)
+            print(
+                f"Error: Unknown council model '{name}'. Available: {', '.join(COUNCIL_MODEL_NAMES)}", file=sys.stderr
+            )
             return 1
 
     if len(model_names) < 2:
@@ -404,8 +418,7 @@ def _cmd_usage_impl(refresh):
     if not token:
         console.print(
             Panel(
-                "[bold red]NOT AUTHENTICATED[/]\n\n"
-                "No session token found. Authenticate first with: [cyan]pwm login[/]",
+                "[bold red]NOT AUTHENTICATED[/]\n\nNo session token found. Authenticate first with: [cyan]pwm login[/]",
                 title="⚠️  Authentication Required",
             )
         )
@@ -625,6 +638,7 @@ def doctor(verbose):
 def _register_setup():
     """Register the setup subgroup from the setup module."""
     from perplexity_web_mcp.cli.setup import setup
+
     cli.add_command(setup)
 
 

@@ -112,11 +112,16 @@ class TestSetupJsonClient:
 
         from perplexity_web_mcp.cli.setup import _setup_json_client
 
-        with patch.dict(CLIENT_REGISTRY, {"test-tool": {
-            "name": "Test Tool",
-            "description": "Test",
-            "config_fn": lambda: cfg_path,
-        }}):
+        with patch.dict(
+            CLIENT_REGISTRY,
+            {
+                "test-tool": {
+                    "name": "Test Tool",
+                    "description": "Test",
+                    "config_fn": lambda: cfg_path,
+                }
+            },
+        ):
             result = _setup_json_client("test-tool")
 
         assert result is True
@@ -130,11 +135,16 @@ class TestSetupJsonClient:
 
         from perplexity_web_mcp.cli.setup import _setup_json_client
 
-        with patch.dict(CLIENT_REGISTRY, {"test-tool": {
-            "name": "Test Tool",
-            "description": "Test",
-            "config_fn": lambda: cfg_path,
-        }}):
+        with patch.dict(
+            CLIENT_REGISTRY,
+            {
+                "test-tool": {
+                    "name": "Test Tool",
+                    "description": "Test",
+                    "config_fn": lambda: cfg_path,
+                }
+            },
+        ):
             _setup_json_client("test-tool")
 
         data = json.loads(cfg_path.read_text())
@@ -143,17 +153,20 @@ class TestSetupJsonClient:
 
     def test_remove_deletes_server(self, tmp_path: Path) -> None:
         cfg_path = tmp_path / "config.json"
-        cfg_path.write_text(json.dumps({
-            "mcpServers": {MCP_SERVER_KEY: {"command": "pwm-mcp"}, "other": {}}
-        }))
+        cfg_path.write_text(json.dumps({"mcpServers": {MCP_SERVER_KEY: {"command": "pwm-mcp"}, "other": {}}}))
 
         from perplexity_web_mcp.cli.setup import _remove_json_client
 
-        with patch.dict(CLIENT_REGISTRY, {"test-tool": {
-            "name": "Test Tool",
-            "description": "Test",
-            "config_fn": lambda: cfg_path,
-        }}):
+        with patch.dict(
+            CLIENT_REGISTRY,
+            {
+                "test-tool": {
+                    "name": "Test Tool",
+                    "description": "Test",
+                    "config_fn": lambda: cfg_path,
+                }
+            },
+        ):
             result = _remove_json_client("test-tool")
 
         assert result is True
@@ -167,21 +180,31 @@ class TestSetupJsonClient:
 
         from perplexity_web_mcp.cli.setup import _remove_json_client
 
-        with patch.dict(CLIENT_REGISTRY, {"test-tool": {
-            "name": "Test Tool",
-            "description": "Test",
-            "config_fn": lambda: cfg_path,
-        }}):
+        with patch.dict(
+            CLIENT_REGISTRY,
+            {
+                "test-tool": {
+                    "name": "Test Tool",
+                    "description": "Test",
+                    "config_fn": lambda: cfg_path,
+                }
+            },
+        ):
             assert _remove_json_client("test-tool") is False
 
     def test_remove_returns_false_when_no_file(self, tmp_path: Path) -> None:
         from perplexity_web_mcp.cli.setup import _remove_json_client
 
-        with patch.dict(CLIENT_REGISTRY, {"test-tool": {
-            "name": "Test Tool",
-            "description": "Test",
-            "config_fn": lambda: tmp_path / "nope.json",
-        }}):
+        with patch.dict(
+            CLIENT_REGISTRY,
+            {
+                "test-tool": {
+                    "name": "Test Tool",
+                    "description": "Test",
+                    "config_fn": lambda: tmp_path / "nope.json",
+                }
+            },
+        ):
             assert _remove_json_client("test-tool") is False
 
 

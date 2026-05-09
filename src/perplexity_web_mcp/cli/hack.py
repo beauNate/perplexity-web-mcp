@@ -65,6 +65,7 @@ def _hack_claude(args: list[str]) -> int:
         print("  [other options]     Any other options are passed directly to Claude Code\n")
         print("Available Models:")
         from perplexity_web_mcp.api.server import AVAILABLE_MODELS
+
         for model in AVAILABLE_MODELS:
             print(f"  {model['id']:<20} {model['description']}")
         return 0
@@ -139,9 +140,7 @@ def _hack_claude(args: list[str]) -> int:
         #    Claude when launched normally. We memorize the original file
         #    content and restore it after the session ends.
         settings_path = Path.home() / ".claude" / "settings.json"
-        original_settings = (
-            settings_path.read_bytes() if settings_path.exists() else None
-        )
+        original_settings = settings_path.read_bytes() if settings_path.exists() else None
 
         # 7. Execute Claude Code interactively
         cmd = [claude_path] + claude_args

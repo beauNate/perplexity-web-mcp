@@ -40,9 +40,7 @@ def patch_environ(monkeypatch):
 class TestSaveToken:
     """Test save_token behavior."""
 
-    def test_saves_to_file_sets_env_returns_true(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_saves_to_file_sets_env_returns_true(self, patch_paths, patch_environ) -> None:
         """save_token writes to file, sets env var, returns True."""
         token = "sk-test-token-12345"
         result = token_store.save_token(token)
@@ -78,9 +76,7 @@ class TestSaveToken:
 class TestLoadToken:
     """Test load_token behavior."""
 
-    def test_file_priority_over_env(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_file_priority_over_env(self, patch_paths, patch_environ) -> None:
         """load_token prefers file over env var when both exist."""
         file_token = "token-from-file"
         env_token = "token-from-env"
@@ -93,9 +89,7 @@ class TestLoadToken:
 
         assert result == file_token
 
-    def test_falls_back_to_env_when_no_file(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_falls_back_to_env_when_no_file(self, patch_paths, patch_environ) -> None:
         """load_token uses env var when token file does not exist."""
         env_token = "token-from-env"
         patch_environ[token_store.ENV_KEY] = env_token
@@ -104,15 +98,11 @@ class TestLoadToken:
 
         assert result == env_token
 
-    def test_returns_none_when_neither_exists(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_returns_none_when_neither_exists(self, patch_paths, patch_environ) -> None:
         """load_token returns None when no file and no env var."""
         assert token_store.load_token() is None
 
-    def test_strips_whitespace_from_file(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_strips_whitespace_from_file(self, patch_paths, patch_environ) -> None:
         """load_token strips leading/trailing whitespace from token file."""
         raw = "  sk-token-with-whitespace  \n"
         patch_paths.mkdir(parents=True)
@@ -122,9 +112,7 @@ class TestLoadToken:
 
         assert result == "sk-token-with-whitespace"
 
-    def test_returns_none_for_empty_file(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_returns_none_for_empty_file(self, patch_paths, patch_environ) -> None:
         """load_token returns None when file exists but is empty or only whitespace."""
         patch_paths.mkdir(parents=True)
         token_store.TOKEN_FILE.write_text("", encoding="utf-8")
@@ -133,9 +121,7 @@ class TestLoadToken:
 
         assert result is None
 
-    def test_returns_none_for_whitespace_only_file(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_returns_none_for_whitespace_only_file(self, patch_paths, patch_environ) -> None:
         """load_token returns None when file contains only whitespace."""
         patch_paths.mkdir(parents=True)
         token_store.TOKEN_FILE.write_text("   \n\t  ", encoding="utf-8")
@@ -153,9 +139,7 @@ class TestLoadToken:
 class TestGetTokenOrRaise:
     """Test get_token_or_raise behavior."""
 
-    def test_returns_token_when_available(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_returns_token_when_available(self, patch_paths, patch_environ) -> None:
         """get_token_or_raise returns token when load_token finds one."""
         token = "sk-available-token"
         patch_paths.mkdir(parents=True)
@@ -165,9 +149,7 @@ class TestGetTokenOrRaise:
 
         assert result == token
 
-    def test_raises_value_error_when_no_token(
-        self, patch_paths, patch_environ
-    ) -> None:
+    def test_raises_value_error_when_no_token(self, patch_paths, patch_environ) -> None:
         """get_token_or_raise raises ValueError when no token found."""
         with pytest.raises(ValueError) as exc_info:
             token_store.get_token_or_raise()

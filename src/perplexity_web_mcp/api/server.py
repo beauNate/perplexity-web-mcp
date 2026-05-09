@@ -7,7 +7,7 @@ to use Perplexity models as a backend.
 Supported APIs:
 - Anthropic Messages API: POST /v1/messages
   Reference: https://docs.anthropic.com/en/api/messages
-  
+
 - OpenAI Chat Completions API: POST /v1/chat/completions
   Reference: https://platform.openai.com/docs/api-reference/chat
 
@@ -18,7 +18,7 @@ Claude Code Integration:
     export ANTHROPIC_AUTH_TOKEN=perplexity
     export ANTHROPIC_BASE_URL=http://localhost:8080
     export ANTHROPIC_API_KEY=""
-  
+
   Then run Claude Code with any supported model:
     claude --model claude-sonnet-4-6      # Use Claude 4.6 Sonnet via Perplexity
     claude --model gpt-5.4                # Use GPT-5.4 via Perplexity
@@ -67,6 +67,7 @@ ANTHROPIC_API_VERSION = "2023-06-01"
 # Configuration
 # =============================================================================
 
+
 @dataclass
 class ServerConfig:
     """Server configuration from environment variables."""
@@ -84,10 +85,7 @@ class ServerConfig:
         # Try to load from token store (env var or ~/.config/perplexity-web-mcp/token)
         session_token = load_token()
         if not session_token:
-            raise ValueError(
-                "No Perplexity session token found. "
-                "Run 'pwm-auth' to authenticate."
-            )
+            raise ValueError("No Perplexity session token found. Run 'pwm-auth' to authenticate.")
 
         return cls(
             session_token=session_token,
@@ -117,7 +115,6 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "sonar": (Models.SONAR, None),
     "perplexity-research": (Models.DEEP_RESEARCH, None),
     "deep-research": (Models.DEEP_RESEARCH, None),
-
     # ==========================================================================
     # Anthropic Claude Models (via Perplexity)
     # Claude Sonnet 4.6 - supports thinking toggle
@@ -153,7 +150,6 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "claude": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "sonnet": (Models.CLAUDE_46_SONNET, Models.CLAUDE_46_SONNET_THINKING),
     "opus": (Models.CLAUDE_47_OPUS, Models.CLAUDE_47_OPUS_THINKING),
-
     # ==========================================================================
     # OpenAI GPT Models (via Perplexity) - support thinking toggle
     # ==========================================================================
@@ -165,7 +161,6 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "gpt-5-5": (Models.GPT_55, Models.GPT_55_THINKING),
     "gpt-55": (Models.GPT_55, Models.GPT_55_THINKING),
     "gpt55": (Models.GPT_55, Models.GPT_55_THINKING),
-
     # ==========================================================================
     # Google Gemini Models (via Perplexity)
     # Gemini 3.1 Pro: thinking ALWAYS enabled (no toggle in UI)
@@ -173,7 +168,6 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "gemini-3.1-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "gemini-3-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
     "gemini-pro": (Models.GEMINI_31_PRO_THINKING, Models.GEMINI_31_PRO_THINKING),
-
     # ==========================================================================
     # NVIDIA Nemotron 3 Super (via Perplexity)
     # Thinking ALWAYS enabled (no toggle in UI) - reasoning only
@@ -181,7 +175,6 @@ MODEL_MAP: dict[str, tuple[Model, Model | None]] = {
     "nemotron-3-super": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
     "nemotron-3": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
     "nemotron": (Models.NEMOTRON_3_SUPER, Models.NEMOTRON_3_SUPER),
-
     # ==========================================================================
     # Moonshot Kimi Models (via Perplexity)
     # Kimi K2.6 - supports thinking toggle
@@ -215,7 +208,7 @@ AVAILABLE_MODELS = [
 
 def get_model(name: str, thinking: bool = False) -> Model:
     """Get Perplexity model from name.
-    
+
     Supports both Anthropic and OpenAI model naming conventions.
     Falls back to perplexity-auto for unknown models.
     """
@@ -234,14 +227,17 @@ def get_model(name: str, thinking: bool = False) -> Model:
 # Pydantic Models (Anthropic API format)
 # =============================================================================
 
+
 class TextContent(BaseModel):
     """Text content block in a message."""
+
     type: str = "text"
     text: str
 
 
 class ImageSource(BaseModel):
     """Image source for multimodal content."""
+
     type: str  # "base64" or "url"
     media_type: str | None = None  # e.g., "image/jpeg"
     data: str | None = None  # base64 data
@@ -250,16 +246,18 @@ class ImageSource(BaseModel):
 
 class ImageContent(BaseModel):
     """Image content block."""
+
     type: str = "image"
     source: ImageSource
 
 
 class MessageParam(BaseModel):
     """Input message parameter (Anthropic format).
-    
+
     Supports both simple string content and complex content blocks
     including text and images.
     """
+
     role: str  # "user" or "assistant"
     content: str | list[dict[str, Any]]
 
@@ -267,7 +265,7 @@ class MessageParam(BaseModel):
 
     def get_text(self) -> str:
         """Extract text content from message.
-        
+
         For simple string content, returns the string directly.
         For content blocks, concatenates all text blocks.
         """
@@ -283,9 +281,10 @@ class MessageParam(BaseModel):
 
 class MessagesRequest(BaseModel):
     """Anthropic Messages API request.
-    
+
     Reference: https://docs.anthropic.com/en/api/messages
     """
+
     model: str = Field(..., description="Model to use (e.g., 'claude-sonnet-4-6')")
     max_tokens: int = Field(..., description="Maximum tokens to generate")
     messages: list[MessageParam] = Field(..., description="Conversation messages")
@@ -302,8 +301,7 @@ class MessagesRequest(BaseModel):
 
     # Extended thinking (maps to Perplexity thinking models)
     thinking: dict[str, Any] | None = Field(
-        None,
-        description="Extended thinking config. Set type='enabled' to use thinking models."
+        None, description="Extended thinking config. Set type='enabled' to use thinking models."
     )
 
     # Tools support (for Claude Code)
@@ -328,21 +326,24 @@ class MessagesRequest(BaseModel):
 
 class Usage(BaseModel):
     """Token usage statistics."""
+
     input_tokens: int = Field(..., description="Number of input tokens")
     output_tokens: int = Field(..., description="Number of output tokens")
 
 
 class TextBlock(BaseModel):
     """Response text content block."""
+
     type: str = "text"
     text: str
 
 
 class MessagesResponse(BaseModel):
     """Anthropic Messages API response.
-    
+
     Reference: https://docs.anthropic.com/en/api/messages
     """
+
     id: str = Field(..., description="Unique message identifier")
     type: str = Field("message", description="Object type")
     role: str = Field("assistant", description="Message role")
@@ -355,6 +356,7 @@ class MessagesResponse(BaseModel):
 
 class ModelObject(BaseModel):
     """Model object (OpenAI-compatible format for /v1/models)."""
+
     id: str
     object: str = "model"
     created: int
@@ -363,18 +365,21 @@ class ModelObject(BaseModel):
 
 class ModelsListResponse(BaseModel):
     """Models list response (OpenAI-compatible format)."""
+
     object: str = "list"
     data: list[ModelObject]
 
 
 class ErrorDetail(BaseModel):
     """Error detail."""
+
     type: str
     message: str
 
 
 class ErrorResponse(BaseModel):
     """Anthropic API error response."""
+
     type: str = "error"
     error: ErrorDetail
 
@@ -383,8 +388,10 @@ class ErrorResponse(BaseModel):
 # OpenAI API Models (Chat Completions format)
 # =============================================================================
 
+
 class OpenAIChatMessage(BaseModel):
     """OpenAI chat message format."""
+
     role: str = Field(..., description="Message role: system, user, or assistant")
     content: str | list[dict[str, Any]] | None = Field(None, description="Message content")
     name: str | None = Field(None, description="Optional name for the participant")
@@ -407,9 +414,10 @@ class OpenAIChatMessage(BaseModel):
 
 class OpenAIChatRequest(BaseModel):
     """OpenAI Chat Completions API request.
-    
+
     Reference: https://platform.openai.com/docs/api-reference/chat
     """
+
     model: str = Field(..., description="Model ID (e.g., 'gpt-4o')")
     messages: list[OpenAIChatMessage] = Field(..., description="Conversation messages")
 
@@ -434,12 +442,14 @@ class OpenAIChatRequest(BaseModel):
 
 class OpenAIChoiceMessage(BaseModel):
     """Message in a chat completion choice."""
+
     role: str = "assistant"
     content: str | None = None
 
 
 class OpenAIChoice(BaseModel):
     """A chat completion choice."""
+
     index: int = 0
     message: OpenAIChoiceMessage
     finish_reason: str | None = "stop"
@@ -448,6 +458,7 @@ class OpenAIChoice(BaseModel):
 
 class OpenAIUsage(BaseModel):
     """Token usage for OpenAI format."""
+
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
@@ -455,9 +466,10 @@ class OpenAIUsage(BaseModel):
 
 class OpenAIChatResponse(BaseModel):
     """OpenAI Chat Completions API response.
-    
+
     Reference: https://platform.openai.com/docs/api-reference/chat
     """
+
     id: str = Field(..., description="Unique completion identifier")
     object: str = Field("chat.completion", description="Object type")
     created: int = Field(..., description="Unix timestamp")
@@ -469,6 +481,7 @@ class OpenAIChatResponse(BaseModel):
 
 class OpenAIStreamChoice(BaseModel):
     """A streaming chat completion choice."""
+
     index: int = 0
     delta: dict[str, Any]
     finish_reason: str | None = None
@@ -477,6 +490,7 @@ class OpenAIStreamChoice(BaseModel):
 
 class OpenAIStreamResponse(BaseModel):
     """OpenAI streaming chunk response."""
+
     id: str
     object: str = "chat.completion.chunk"
     created: int
@@ -503,6 +517,7 @@ MIN_REQUEST_INTERVAL: float = 5.0  # Minimum seconds between Perplexity requests
 # =============================================================================
 # Application
 # =============================================================================
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -555,13 +570,14 @@ app.add_middleware(
 # Helpers
 # =============================================================================
 
+
 def verify_auth(request: Request) -> None:
     """Verify API key if configured.
-    
+
     Supports both:
     - x-api-key header (Anthropic style)
     - Authorization: Bearer <key> header (OpenAI style)
-    
+
     For Claude Code compatibility:
     - If ANTHROPIC_API_KEY env var is not set, any auth value is accepted
     - This matches Ollama's behavior for seamless Claude Code integration
@@ -577,20 +593,14 @@ def verify_auth(request: Request) -> None:
 
     # If API key is configured, validate it
     if auth != config.api_key:
-        raise HTTPException(
-            status_code=401,
-            detail={"type": "authentication_error", "message": "Invalid API key"}
-        )
+        raise HTTPException(status_code=401, detail={"type": "authentication_error", "message": "Invalid API key"})
 
 
 def check_anthropic_version(request: Request) -> None:
     """Log anthropic-version header if present (informational only)."""
     version = request.headers.get("anthropic-version")
     if version and version != ANTHROPIC_API_VERSION:
-        logging.debug(
-            f"Client requested anthropic-version {version}, "
-            f"server implements {ANTHROPIC_API_VERSION}"
-        )
+        logging.debug(f"Client requested anthropic-version {version}, server implements {ANTHROPIC_API_VERSION}")
 
 
 def messages_to_query(messages: list[MessageParam]) -> str:
@@ -609,7 +619,7 @@ def messages_to_query(messages: list[MessageParam]) -> str:
 
 def openai_messages_to_query(messages: list[OpenAIChatMessage]) -> str:
     """Convert OpenAI chat messages to Perplexity query.
-    
+
     Note: System messages are intentionally NOT included to avoid URL length
     limits with Perplexity.
     """
@@ -645,7 +655,7 @@ def format_citations(search_results: list) -> str:
 
     citations = ["\n\nCitations:"]
     for i, result in enumerate(search_results, 1):
-        url = getattr(result, 'url', '') or ''
+        url = getattr(result, "url", "") or ""
         if url:
             citations.append(f"\n[{i}]: {url}")
 
@@ -655,6 +665,7 @@ def format_citations(search_results: list) -> str:
 # =============================================================================
 # Endpoints
 # =============================================================================
+
 
 @app.get("/")
 async def root():
@@ -666,6 +677,7 @@ async def root():
         "endpoints": {
             "anthropic": "/v1/messages",
             "openai": "/v1/chat/completions",
+            "openai_responses": "/v1/responses",
             "models": "/v1/models",
             "health": "/health",
         },
@@ -674,6 +686,7 @@ async def root():
 
 class CountTokensRequest(BaseModel):
     """Request model for count_tokens endpoint."""
+
     model: str
     messages: list[MessageParam]
     system: str | list[dict[str, Any]] | None = None
@@ -683,7 +696,7 @@ class CountTokensRequest(BaseModel):
 @app.post("/v1/messages/count_tokens")
 async def count_tokens(request: Request, body: CountTokensRequest):
     """Count tokens in a messages request (Anthropic beta endpoint).
-    
+
     Returns estimated token count. Claude Code calls this frequently.
     """
     verify_auth(request)
@@ -714,20 +727,15 @@ async def list_models(request: Request):
     verify_auth(request)
 
     now = int(time.time())
-    return ModelsListResponse(
-        data=[
-            ModelObject(id=m["id"], created=now)
-            for m in AVAILABLE_MODELS
-        ]
-    )
+    return ModelsListResponse(data=[ModelObject(id=m["id"], created=now) for m in AVAILABLE_MODELS])
 
 
 @app.post("/v1/messages")
 async def create_message(request: Request, body: MessagesRequest):
     """Create a message (Anthropic Messages API).
-    
+
     Reference: https://docs.anthropic.com/en/api/messages
-    
+
     Supports:
     - Single and multi-turn conversations
     - System prompts (primed into conversation context)
@@ -750,6 +758,7 @@ async def create_message(request: Request, body: MessagesRequest):
         mock_response = f"Response to: {user_msg}" if user_msg else "OK"
 
         if body.stream:
+
             async def mock_stream():
                 yield f"event: message_start\ndata: {json.dumps({'type': 'message_start', 'message': {'id': response_id, 'type': 'message', 'role': 'assistant', 'content': [], 'model': body.model, 'stop_reason': None, 'stop_sequence': None, 'usage': {'input_tokens': 10, 'output_tokens': 0}}})}\n\n"
                 yield f"event: content_block_start\ndata: {json.dumps({'type': 'content_block_start', 'index': 0, 'content_block': {'type': 'text', 'text': ''}})}\n\n"
@@ -774,8 +783,7 @@ async def create_message(request: Request, body: MessagesRequest):
 
     if not body.messages:
         raise HTTPException(
-            status_code=400,
-            detail={"type": "invalid_request_error", "message": "messages is required"}
+            status_code=400, detail={"type": "invalid_request_error", "message": "messages is required"}
         )
 
     # Determine if thinking mode is requested
@@ -857,10 +865,7 @@ async def create_message(request: Request, body: MessagesRequest):
 
     except Exception as e:
         logging.error(f"Error creating message: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"type": "api_error", "message": str(e)}
-        )
+        raise HTTPException(status_code=500, detail={"type": "api_error", "message": str(e)})
 
 
 async def stream_response(
@@ -872,7 +877,7 @@ async def stream_response(
     system_text: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """Stream Anthropic-format SSE response.
-    
+
     Implements the Anthropic streaming protocol:
     1. message_start - Initial message object with empty content
     2. content_block_start - Start of each content block
@@ -881,7 +886,7 @@ async def stream_response(
     5. content_block_stop - End of content block
     6. message_delta - Final message updates (stop_reason, usage)
     7. message_stop - Stream complete
-    
+
     Reference: https://docs.anthropic.com/en/api/messages-streaming
     """
     import threading
@@ -903,7 +908,7 @@ async def stream_response(
             "stop_reason": None,
             "stop_sequence": None,
             "usage": {"input_tokens": input_tokens, "output_tokens": 0},
-        }
+        },
     }
     yield f"event: message_start\ndata: {json.dumps(message_start)}\n\n"
 
@@ -958,7 +963,7 @@ async def stream_response(
                 for resp in conversation.ask(full_query, stream=True):
                     current = resp.answer or ""
                     if len(current) > len(last):
-                        delta = current[len(last):]
+                        delta = current[len(last) :]
                         last = current
                         loop.call_soon_threadsafe(queue.put_nowait, ("delta", delta))
 
@@ -1063,12 +1068,13 @@ async def stream_response(
 # OpenAI Chat Completions Endpoint
 # =============================================================================
 
+
 @app.post("/v1/chat/completions")
 async def create_chat_completion(request: Request, body: OpenAIChatRequest):
     """Create a chat completion (OpenAI Chat Completions API).
-    
+
     Reference: https://platform.openai.com/docs/api-reference/chat
-    
+
     Supports:
     - System, user, and assistant messages
     - Streaming (SSE) and non-streaming responses
@@ -1078,8 +1084,7 @@ async def create_chat_completion(request: Request, body: OpenAIChatRequest):
 
     if not body.messages:
         raise HTTPException(
-            status_code=400,
-            detail={"error": {"type": "invalid_request_error", "message": "messages is required"}}
+            status_code=400, detail={"error": {"type": "invalid_request_error", "message": "messages is required"}}
         )
 
     # Determine if thinking mode should be enabled
@@ -1148,10 +1153,7 @@ async def create_chat_completion(request: Request, body: OpenAIChatRequest):
 
     except Exception as e:
         logging.error(f"Error creating chat completion: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"error": {"type": "api_error", "message": str(e)}}
-        )
+        raise HTTPException(status_code=500, detail={"error": {"type": "api_error", "message": str(e)}})
 
 
 async def stream_openai_response(
@@ -1162,13 +1164,13 @@ async def stream_openai_response(
     created: int,
 ) -> AsyncGenerator[str, None]:
     """Stream OpenAI-format SSE response.
-    
+
     Implements the OpenAI streaming protocol:
     1. Initial chunk with role
     2. Content delta chunks
     3. Final chunk with finish_reason
     4. [DONE] marker
-    
+
     Reference: https://platform.openai.com/docs/api-reference/chat/streaming
     """
     import threading
@@ -1202,7 +1204,7 @@ async def stream_openai_response(
             for resp in conversation.ask(query, stream=True):
                 current = resp.answer or ""
                 if len(current) > len(last):
-                    delta = current[len(last):]
+                    delta = current[len(last) :]
                     last = current
                     loop.call_soon_threadsafe(queue.put_nowait, ("delta", delta))
             # Get citations from search results
@@ -1293,6 +1295,12 @@ async def stream_openai_response(
 # =============================================================================
 # Main
 # =============================================================================
+
+from .responses import responses_router
+
+
+app.include_router(responses_router)
+
 
 def run_server():
     """Run the API server."""

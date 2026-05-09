@@ -12,9 +12,10 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
+
 
 API_URL = "https://www.perplexity.ai/rest/models/config?config_schema=v1"
 REFERENCE_PATH = Path(__file__).parent / "reference_model_config.json"
@@ -40,13 +41,12 @@ def fetch_live_config() -> dict:
     """Fetch the current model config from Perplexity's public API via curl."""
     result = subprocess.run(
         ["curl", "-s", "-f", "-H", "User-Agent: Mozilla/5.0", API_URL],
-        capture_output=True, text=True, timeout=20,
+        capture_output=True,
+        text=True,
+        timeout=20,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"curl failed (exit {result.returncode}): {result.stderr.strip()}\n"
-            f"{BROWSER_FETCH_HINT}"
-        )
+        raise RuntimeError(f"curl failed (exit {result.returncode}): {result.stderr.strip()}\n{BROWSER_FETCH_HINT}")
     return json.loads(result.stdout)
 
 
@@ -55,9 +55,7 @@ def fetch_via_browser(port: int = 9222) -> dict:
     import urllib.request
 
     # Get the first page's WebSocket URL
-    pages = json.loads(
-        urllib.request.urlopen(f"http://127.0.0.1:{port}/json", timeout=5).read()
-    )
+    pages = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{port}/json", timeout=5).read())
     if not pages:
         raise RuntimeError("No Chrome pages found. Is Chrome open with --remote-debugging-port?")
 
@@ -70,15 +68,19 @@ def fetch_via_browser(port: int = 9222) -> dict:
     import websocket  # type: ignore[import-untyped]
 
     ws = websocket.create_connection(ws_url, timeout=15)
-    ws.send(json.dumps({
-        "id": 1,
-        "method": "Runtime.evaluate",
-        "params": {
-            "expression": "fetch('/rest/models/config?config_schema=v1').then(r=>r.json()).then(d=>JSON.stringify(d))",
-            "awaitPromise": True,
-            "returnByValue": True,
-        },
-    }))
+    ws.send(
+        json.dumps(
+            {
+                "id": 1,
+                "method": "Runtime.evaluate",
+                "params": {
+                    "expression": "fetch('/rest/models/config?config_schema=v1').then(r=>r.json()).then(d=>JSON.stringify(d))",
+                    "awaitPromise": True,
+                    "returnByValue": True,
+                },
+            }
+        )
+    )
     resp = json.loads(ws.recv())
     ws.close()
 
@@ -191,8 +193,8 @@ def diff_configs(old: dict, new: dict) -> None:
         print(f"\n🆕 Added to selector ({len(config_added)}):")
         for k in sorted(config_added):
             c = new_config[k]
-            thinking = "Always" if not c.get("non_reasoning_model") else (
-                "Toggle" if c.get("reasoning_model") else "No"
+            thinking = (
+                "Always" if not c.get("non_reasoning_model") else ("Toggle" if c.get("reasoning_model") else "No")
             )
             print(f"   + {c['label']} (id: {k}, tier: {c.get('subscription_tier')}, thinking: {thinking})")
     else:
@@ -251,10 +253,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Detect Perplexity model changes")
     parser.add_argument("--save", action="store_true", help="Save current config as reference")
     parser.add_argument("--json", action="store_true", help="Output raw JSON config")
-    parser.add_argument("--from-file", type=Path, metavar="FILE",
-                        help="Use a local JSON file instead of fetching from API")
-    parser.add_argument("--from-browser", action="store_true",
-                        help="Fetch via Chrome DevTools (requires --remote-debugging-port=9222)")
+    parser.add_argument(
+        "--from-file", type=Path, metavar="FILE", help="Use a local JSON file instead of fetching from API"
+    )
+    parser.add_argument(
+        "--from-browser", action="store_true", help="Fetch via Chrome DevTools (requires --remote-debugging-port=9222)"
+    )
     args = parser.parse_args()
 
     if args.from_file:

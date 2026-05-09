@@ -221,7 +221,7 @@ class HTTPClient:
 
     def init_search(self, query: str) -> None:
         """Initialize a search session (required before prompts).
-        
+
         Uses minimal headers to avoid Cloudflare bot detection.
         The full headers (Accept, Content-Type) are only needed for POST requests.
         Retries on transient failures (same as get/post).

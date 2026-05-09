@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 # Data models
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True, slots=True)
 class SourceLimit:
     """Rate limit for a specific source (web, scholar, Google Drive, etc.)."""
@@ -298,6 +299,7 @@ class Credits:
 # Fetching (low-level, no caching)
 # ---------------------------------------------------------------------------
 
+
 def _create_session(token: str) -> Session:
     """Create a minimal session for REST API calls."""
     return Session(
@@ -362,6 +364,7 @@ def fetch_credits(token: str) -> Credits | None:
 # ---------------------------------------------------------------------------
 # Cached layer (thread-safe, time-based)
 # ---------------------------------------------------------------------------
+
 
 class RateLimitCache:
     """Thread-safe, time-based cache for rate limit and settings data.
@@ -480,11 +483,7 @@ class RateLimitCache:
     def get_credits(self, force_refresh: bool = False) -> Credits | None:
         """Get credits info, fetching if cache is stale or empty."""
         with self._lock:
-            if (
-                not force_refresh
-                and self._credits is not None
-                and (monotonic() - self._credits_ts) < self._credits_ttl
-            ):
+            if not force_refresh and self._credits is not None and (monotonic() - self._credits_ts) < self._credits_ttl:
                 return self._credits
             token = self._token
 

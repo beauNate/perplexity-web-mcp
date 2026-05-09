@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 @dataclass(slots=True)
 class ConversationSession:
     """Minimal state needed to restore a Perplexity conversation."""
-    
+
     backend_uuid: str
     read_write_token: str | None
     model: Model
@@ -28,9 +28,9 @@ class ConversationSession:
 
 class SessionStore:
     """Thread-safe, TTL-based in-memory store for conversation sessions."""
-    
+
     __slots__ = ("_lock", "_sessions", "_ttl_seconds")
-    
+
     def __init__(self, ttl_seconds: float = 3600.0) -> None:
         self._lock = Lock()
         self._sessions: dict[str, ConversationSession] = {}
@@ -53,11 +53,11 @@ class SessionStore:
             session = self._sessions.get(conversation_id)
             if session is None:
                 return None
-                
+
             if monotonic() - session.created_at > self._ttl_seconds:
                 del self._sessions[conversation_id]
                 return None
-                
+
             # Update TTL on access
             session.created_at = monotonic()
             return session
@@ -66,8 +66,7 @@ class SessionStore:
         """Evict expired sessions. Must be called with lock held."""
         now = monotonic()
         expired = [
-            conv_id for conv_id, session in self._sessions.items()
-            if now - session.created_at > self._ttl_seconds
+            conv_id for conv_id, session in self._sessions.items() if now - session.created_at > self._ttl_seconds
         ]
         for conv_id in expired:
             del self._sessions[conv_id]

@@ -36,9 +36,7 @@ class TestSettingsGuard:
     @patch("perplexity_web_mcp.cli.hack.shutil.which", return_value="/usr/bin/claude")
     @patch("perplexity_web_mcp.cli.hack._check_server_ready", return_value=True)
     @patch("perplexity_web_mcp.cli.hack.subprocess.Popen")
-    def test_settings_restored_after_normal_exit(
-        self, mock_popen, mock_ready, mock_which, mock_run, tmp_path
-    ):
+    def test_settings_restored_after_normal_exit(self, mock_popen, mock_ready, mock_which, mock_run, tmp_path):
         """Settings are restored after Claude exits normally."""
         original = {"model": "claude-sonnet-4-6", "permissions": {"ask": []}}
         settings_path = self._make_settings(tmp_path, original)
@@ -62,9 +60,7 @@ class TestSettingsGuard:
     @patch("perplexity_web_mcp.cli.hack.shutil.which", return_value="/usr/bin/claude")
     @patch("perplexity_web_mcp.cli.hack._check_server_ready", return_value=True)
     @patch("perplexity_web_mcp.cli.hack.subprocess.Popen")
-    def test_settings_restored_after_exception(
-        self, mock_popen, mock_ready, mock_which, mock_run, tmp_path
-    ):
+    def test_settings_restored_after_exception(self, mock_popen, mock_ready, mock_which, mock_run, tmp_path):
         """Settings are restored even when Claude crashes with an exception."""
         original = {"model": "claude-sonnet-4-6"}
         settings_path = self._make_settings(tmp_path, original)
@@ -88,9 +84,7 @@ class TestSettingsGuard:
     @patch("perplexity_web_mcp.cli.hack.shutil.which", return_value="/usr/bin/claude")
     @patch("perplexity_web_mcp.cli.hack._check_server_ready", return_value=True)
     @patch("perplexity_web_mcp.cli.hack.subprocess.Popen")
-    def test_no_crash_when_settings_missing(
-        self, mock_popen, mock_ready, mock_which, mock_run, tmp_path
-    ):
+    def test_no_crash_when_settings_missing(self, mock_popen, mock_ready, mock_which, mock_run, tmp_path):
         """No error when settings.json doesn't exist (fresh install)."""
         # Create .claude dir but NOT settings.json
         (tmp_path / ".claude").mkdir()
@@ -109,9 +103,7 @@ class TestSettingsGuard:
     @patch("perplexity_web_mcp.cli.hack.shutil.which", return_value="/usr/bin/claude")
     @patch("perplexity_web_mcp.cli.hack._check_server_ready", return_value=True)
     @patch("perplexity_web_mcp.cli.hack.subprocess.Popen")
-    def test_settings_unchanged_no_corruption(
-        self, mock_popen, mock_ready, mock_which, mock_run, tmp_path
-    ):
+    def test_settings_unchanged_no_corruption(self, mock_popen, mock_ready, mock_which, mock_run, tmp_path):
         """When Claude doesn't change settings, file stays identical."""
         original = {"model": "claude-sonnet-4-6", "effortLevel": "medium"}
         settings_path = self._make_settings(tmp_path, original)
@@ -129,9 +121,7 @@ class TestSettingsGuard:
     @patch("perplexity_web_mcp.cli.hack.shutil.which", return_value="/usr/bin/claude")
     @patch("perplexity_web_mcp.cli.hack._check_server_ready", return_value=True)
     @patch("perplexity_web_mcp.cli.hack.subprocess.Popen")
-    def test_settings_preserves_binary_content(
-        self, mock_popen, mock_ready, mock_which, mock_run, tmp_path
-    ):
+    def test_settings_preserves_binary_content(self, mock_popen, mock_ready, mock_which, mock_run, tmp_path):
         """Backup/restore uses read_bytes/write_bytes for exact preservation."""
         # Use content with specific whitespace formatting
         raw_content = b'{\n  "model": "claude-sonnet-4-6",\n  "effortLevel": "medium"\n}'

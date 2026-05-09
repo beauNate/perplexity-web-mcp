@@ -30,6 +30,7 @@ from perplexity_web_mcp.router import (
 # Fixtures
 # ============================================================================
 
+
 @pytest.fixture
 def sample_quota_snapshot() -> dict:
     return {
@@ -68,6 +69,7 @@ def sample_response(sample_routing: RoutingDecision) -> SmartResponse:
 # 1. Enum Basics
 # ============================================================================
 
+
 class TestEnums:
     def test_quota_level_values(self) -> None:
         assert QuotaLevel.HEALTHY == "healthy"
@@ -91,6 +93,7 @@ class TestEnums:
 # ============================================================================
 # 2. _classify (pro thresholds: 0=exhausted, <10%=critical, <20%=low, else healthy)
 # ============================================================================
+
 
 class TestClassifyPro:
     """Pro thresholds with max=300: 10% = 30, 20% = 60."""
@@ -133,6 +136,7 @@ class TestClassifyPro:
 # 3. _classify_research (thresholds: 0=exhausted, <20%=critical, <50%=low, else healthy)
 # ============================================================================
 
+
 class TestClassifyResearch:
     """Research thresholds with max=10: 20% = 2, 50% = 5."""
 
@@ -167,6 +171,7 @@ class TestClassifyResearch:
 # ============================================================================
 # 4. QuotaState.from_rate_limits
 # ============================================================================
+
 
 class TestQuotaStateFromRateLimits:
     def test_healthy_across_board(self) -> None:
@@ -244,6 +249,7 @@ class TestQuotaStateFromRateLimits:
 # 5. QuotaState.to_dict
 # ============================================================================
 
+
 class TestQuotaStateToDict:
     def test_to_dict_keys(self) -> None:
         limits = RateLimits(
@@ -275,6 +281,7 @@ class TestQuotaStateToDict:
 # ============================================================================
 # 6. RoutingDecision
 # ============================================================================
+
 
 class TestRoutingDecision:
     def test_creation(self, sample_routing: RoutingDecision) -> None:
@@ -318,6 +325,7 @@ class TestRoutingDecision:
 # ============================================================================
 # 7. SmartResponse.format_metadata_block
 # ============================================================================
+
 
 class TestSmartResponseMetadata:
     def test_format_metadata_block(self, sample_response: SmartResponse) -> None:
@@ -364,6 +372,7 @@ class TestSmartResponseMetadata:
 # ============================================================================
 # 8. SmartResponse.format_response
 # ============================================================================
+
 
 class TestSmartResponseFormat:
     def test_format_response_with_citations(self, sample_response: SmartResponse) -> None:
@@ -420,6 +429,7 @@ class TestSmartResponseFormat:
 # 9. SmartResponse.to_dict
 # ============================================================================
 
+
 class TestSmartResponseToDict:
     def test_to_dict_structure(self, sample_response: SmartResponse) -> None:
         d = sample_response.to_dict()
@@ -466,6 +476,7 @@ class TestSmartResponseToDict:
 # 10. SmartRouter — QUICK intent
 # ============================================================================
 
+
 class TestSmartRouterQuick:
     """QUICK always routes to Sonar, regardless of quota state."""
 
@@ -510,6 +521,7 @@ class TestSmartRouterQuick:
 # ============================================================================
 # 11. SmartRouter — STANDARD intent
 # ============================================================================
+
 
 class TestSmartRouterStandard:
     """STANDARD routes to auto (BEST) when pro available, Sonar when exhausted."""
@@ -557,6 +569,7 @@ class TestSmartRouterStandard:
 # ============================================================================
 # 12. SmartRouter — DETAILED intent
 # ============================================================================
+
 
 class TestSmartRouterDetailed:
     """DETAILED: premium when healthy/low, auto when critical, Sonar when exhausted."""
@@ -611,6 +624,7 @@ class TestSmartRouterDetailed:
 # ============================================================================
 # 13. SmartRouter — RESEARCH intent
 # ============================================================================
+
 
 class TestSmartRouterResearch:
     """RESEARCH: deep_research when available, premium when research exhausted, Sonar when all exhausted."""
@@ -678,6 +692,7 @@ class TestSmartRouterResearch:
 # 14. SmartRouter — limits=None (optimistic routing)
 # ============================================================================
 
+
 class TestSmartRouterOptimistic:
     """When limits=None (fetch failed), route optimistically with ideal models."""
 
@@ -730,6 +745,7 @@ class TestSmartRouterOptimistic:
 # ============================================================================
 # 15. SmartRouter — custom maximums
 # ============================================================================
+
 
 class TestSmartRouterCustomMax:
     """Verify custom pro_max/research_max affect classification thresholds."""

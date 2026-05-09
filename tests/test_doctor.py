@@ -42,8 +42,13 @@ class TestDoctorAllGreen:
     @patch("perplexity_web_mcp.cli.skill._get_targets", return_value=[])
     def test_all_green_path(
         self,
-        mock_targets, mock_tools, mock_limits, mock_user,
-        mock_which, mock_token, mock_file,
+        mock_targets,
+        mock_tools,
+        mock_limits,
+        mock_user,
+        mock_which,
+        mock_token,
+        mock_file,
         capsys: pytest.CaptureFixture,
     ) -> None:
         mock_file.exists.return_value = True
@@ -77,7 +82,11 @@ class TestDoctorNoToken:
     @patch("perplexity_web_mcp.cli.setup._get_tools", return_value=[])
     @patch("perplexity_web_mcp.cli.skill._get_targets", return_value=[])
     def test_no_token_shows_error(
-        self, mock_targets, mock_tools, mock_which, mock_token,
+        self,
+        mock_targets,
+        mock_tools,
+        mock_which,
+        mock_token,
         capsys: pytest.CaptureFixture,
     ) -> None:
         code = cmd_doctor([])
@@ -101,8 +110,13 @@ class TestDoctorExpiredToken:
     @patch("perplexity_web_mcp.cli.setup._get_tools", return_value=[])
     @patch("perplexity_web_mcp.cli.skill._get_targets", return_value=[])
     def test_expired_token(
-        self, mock_targets, mock_tools, mock_user,
-        mock_which, mock_token, mock_file,
+        self,
+        mock_targets,
+        mock_tools,
+        mock_user,
+        mock_which,
+        mock_token,
+        mock_file,
         capsys: pytest.CaptureFixture,
     ) -> None:
         mock_file.exists.return_value = True
@@ -127,8 +141,14 @@ class TestDoctorLimitsExhausted:
     @patch("perplexity_web_mcp.cli.setup._get_tools", return_value=[])
     @patch("perplexity_web_mcp.cli.skill._get_targets", return_value=[])
     def test_zero_pro_search(
-        self, mock_targets, mock_tools, mock_limits, mock_user,
-        mock_which, mock_token, mock_file,
+        self,
+        mock_targets,
+        mock_tools,
+        mock_limits,
+        mock_user,
+        mock_which,
+        mock_token,
+        mock_file,
         capsys: pytest.CaptureFixture,
     ) -> None:
         mock_file.exists.return_value = True
@@ -162,8 +182,15 @@ class TestDoctorMCPNotConfigured:
     @patch("perplexity_web_mcp.cli.setup._is_configured_compat", return_value=False)
     @patch("perplexity_web_mcp.cli.skill._get_targets", return_value=[])
     def test_shows_setup_suggestions(
-        self, mock_targets, mock_is_conf, mock_tools, mock_limits, mock_user,
-        mock_which, mock_token, mock_file,
+        self,
+        mock_targets,
+        mock_is_conf,
+        mock_tools,
+        mock_limits,
+        mock_user,
+        mock_which,
+        mock_token,
+        mock_file,
         capsys: pytest.CaptureFixture,
     ) -> None:
         mock_file.exists.return_value = True
@@ -200,8 +227,14 @@ class TestDoctorVerbose:
     @patch("perplexity_web_mcp.cli.setup._get_tools", return_value=[])
     @patch("perplexity_web_mcp.cli.skill._get_targets", return_value=[])
     def test_verbose_shows_security(
-        self, mock_targets, mock_tools, mock_limits, mock_user,
-        mock_which, mock_token, mock_file,
+        self,
+        mock_targets,
+        mock_tools,
+        mock_limits,
+        mock_user,
+        mock_which,
+        mock_token,
+        mock_file,
         capsys: pytest.CaptureFixture,
     ) -> None:
         mock_file.exists.return_value = True

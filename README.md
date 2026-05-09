@@ -420,6 +420,21 @@ export OPENAI_BASE_URL=http://localhost:8080/v1
 export OPENAI_API_KEY=anything
 ```
 
+### Codex CLI Integration
+
+Codex CLI performs strict client-side model validation. By default, it will reject any model name that isn't a recognized OpenAI ChatGPT account model (e.g., rejecting `sonar`).
+
+To bypass this client-side block and use arbitrary Perplexity models natively, start Codex with the `--local-provider lmstudio` flag (or `--oss`). This instructs Codex to treat the backend as a local proxy:
+
+```bash
+export OPENAI_API_BASE=http://localhost:8080/v1
+export OPENAI_API_KEY=dummy
+
+codex -m sonar --local-provider lmstudio
+```
+
+Our server's `MODEL_MAP` will seamlessly intercept `sonar` (or any other mapped names like `gemini-pro`, `nemotron`, `claude-sonnet-4-6`) and correctly route it to Perplexity's API. You can also create an alias in your shell to make this easier: `alias codex-pplx="codex --local-provider lmstudio"`.
+
 ### API Model Names
 
 | API Name | Perplexity Model | Thinking |

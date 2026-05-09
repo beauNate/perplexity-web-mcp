@@ -43,13 +43,13 @@ CLAUDE_CODE_MARKERS = [
 
 def distill_system_prompt(system_prompt: str | None) -> str:
     """Distill a system prompt to its essential behavioral instructions.
-    
+
     For Claude Code's massive system prompt, returns a condensed version.
     For other prompts, extracts key behavioral patterns.
-    
+
     Args:
         system_prompt: Full system prompt text (can be very long)
-        
+
     Returns:
         Condensed behavioral instructions (~200-500 chars)
     """
@@ -63,7 +63,7 @@ def distill_system_prompt(system_prompt: str | None) -> str:
 
     # For other system prompts, try to extract key instructions
     # Look for common patterns
-    lines = system_prompt.split('\n')
+    lines = system_prompt.split("\n")
     key_lines = []
 
     for line in lines:
@@ -71,10 +71,23 @@ def distill_system_prompt(system_prompt: str | None) -> str:
         if not line:
             continue
         # Look for behavioral instructions
-        if any(pattern in line.lower() for pattern in [
-            'you are', 'you must', 'always', 'never', 'be ', 'don\'t', 'do not',
-            'important', 'critical', 'rule', 'focus on', 'prioritize'
-        ]):
+        if any(
+            pattern in line.lower()
+            for pattern in [
+                "you are",
+                "you must",
+                "always",
+                "never",
+                "be ",
+                "don't",
+                "do not",
+                "important",
+                "critical",
+                "rule",
+                "focus on",
+                "prioritize",
+            ]
+        ):
             if len(line) < 200:  # Skip very long lines
                 key_lines.append(line)
 
@@ -83,21 +96,21 @@ def distill_system_prompt(system_prompt: str | None) -> str:
             break
 
     if key_lines:
-        distilled = '\n'.join(key_lines[:5])  # Take top 5
+        distilled = "\n".join(key_lines[:5])  # Take top 5
         if len(distilled) > 500:
-            distilled = distilled[:500] + '...'
+            distilled = distilled[:500] + "..."
         return distilled
 
     # Fallback: take first 300 chars
-    return system_prompt[:300] + ('...' if len(system_prompt) > 300 else '')
+    return system_prompt[:300] + ("..." if len(system_prompt) > 300 else "")
 
 
 def hash_system_prompt(system_prompt: str | None) -> str:
     """Create a hash of the system prompt for session identification.
-    
+
     Args:
         system_prompt: The system prompt text
-        
+
     Returns:
         Short hash string for cache key
     """
@@ -112,6 +125,7 @@ def hash_system_prompt(system_prompt: str | None) -> str:
 # =============================================================================
 # Session Data
 # =============================================================================
+
 
 @dataclass
 class Session:
@@ -158,9 +172,10 @@ class Session:
 # Conversation Manager
 # =============================================================================
 
+
 class ConversationManager:
     """Manages primed conversation sessions with pooling for concurrency.
-    
+
     Features:
     - Creates and primes new conversations with system prompt + tool instructions
     - Pools sessions by system prompt hash to handle concurrent requests
@@ -176,7 +191,7 @@ class ConversationManager:
         session_timeout_seconds: float = 1800,  # 30 minutes
     ):
         """Initialize the conversation manager.
-        
+
         Args:
             client: Perplexity client instance
             max_sessions: Maximum total number of cached sessions
@@ -196,10 +211,7 @@ class ConversationManager:
         for key in list(self._session_pools.keys()):
             pool = self._session_pools[key]
             # Remove expired idle sessions
-            self._session_pools[key] = [
-                s for s in pool
-                if s.in_use or s.idle_seconds <= self.session_timeout
-            ]
+            self._session_pools[key] = [s for s in pool if s.in_use or s.idle_seconds <= self.session_timeout]
             # Remove empty pools
             if not self._session_pools[key]:
                 del self._session_pools[key]
@@ -209,10 +221,7 @@ class ConversationManager:
         if total > self.max_sessions:
             # Collect all idle sessions and remove oldest
             all_sessions = [
-                (key, i, s)
-                for key, pool in self._session_pools.items()
-                for i, s in enumerate(pool)
-                if not s.in_use
+                (key, i, s) for key, pool in self._session_pools.items() for i, s in enumerate(pool) if not s.in_use
             ]
             all_sessions.sort(key=lambda x: x[2].last_used)
 
@@ -232,15 +241,15 @@ class ConversationManager:
         tools: list[dict[str, Any]] | None = None,
     ) -> tuple[Session, bool]:
         """Get an available session or create a new one.
-        
+
         Uses a pool of sessions to handle concurrent requests. If all sessions
         for a given system prompt are in-use, creates a new one (up to limit).
-        
+
         Args:
             model: The Perplexity model to use
             system_prompt: Optional system prompt (will be distilled)
             tools: Optional tool definitions (for priming context)
-            
+
         Returns:
             Tuple of (session, is_new) where is_new indicates if session was just created
         """
@@ -313,14 +322,14 @@ class ConversationManager:
         tools: list[dict[str, Any]] | None,
     ) -> str | None:
         """Prime a new session with context.
-        
+
         Sends an initial message to establish context, then discards the response.
-        
+
         Args:
             session: The session to prime
             system_prompt: Original system prompt
             tools: Tool definitions
-            
+
         Returns:
             Priming response (for debugging) or None if already primed
         """
@@ -342,18 +351,22 @@ class ConversationManager:
         if tools:
             # Include tool awareness in priming
             tool_names = [t.get("name", "unknown") for t in tools[:10]]  # First 10 tools
-            priming_parts.extend([
-                "Available Tools:",
-                ", ".join(tool_names),
-                "",
-                "When I ask you to perform actions, use the appropriate tools.",
-                "",
-            ])
+            priming_parts.extend(
+                [
+                    "Available Tools:",
+                    ", ".join(tool_names),
+                    "",
+                    "When I ask you to perform actions, use the appropriate tools.",
+                    "",
+                ]
+            )
 
-        priming_parts.extend([
-            "=" * 40,
-            "Acknowledge this context with a brief 'Ready.' response.",
-        ])
+        priming_parts.extend(
+            [
+                "=" * 40,
+                "Acknowledge this context with a brief 'Ready.' response.",
+            ]
+        )
 
         priming_message = "\n".join(priming_parts)
 
@@ -369,7 +382,7 @@ class ConversationManager:
 
     def clear_pool(self, system_prompt: str | None, model: Model):
         """Clear a specific session pool.
-        
+
         Args:
             system_prompt: The system prompt
             model: The model

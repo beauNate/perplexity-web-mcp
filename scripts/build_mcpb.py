@@ -10,8 +10,9 @@ Usage:
 """
 
 import json
-import zipfile
 from pathlib import Path
+import zipfile
+
 
 # Paths relative to project root
 PROJECT_ROOT = Path(__file__).parent.parent

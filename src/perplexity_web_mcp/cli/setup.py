@@ -83,10 +83,7 @@ def _remove_mcp_server(config: dict, key: str = MCP_SERVER_KEY) -> bool:
 def _claude_desktop_config_path() -> Path:
     system = platform.system()
     if system == "Darwin":
-        return (
-            Path.home() / "Library" / "Application Support" / "Claude"
-            / "claude_desktop_config.json"
-        )
+        return Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
     elif system == "Windows":
         return Path(os.environ.get("APPDATA", "")) / "Claude" / "claude_desktop_config.json"
     else:
@@ -202,7 +199,9 @@ def _setup_claude_code() -> bool:
     try:
         result = subprocess.run(
             [claude_cmd, "mcp", "add", "-s", "user", MCP_SERVER_KEY, "--", MCP_SERVER_CMD],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         combined = (result.stdout + result.stderr).lower()
         if result.returncode == 0:
@@ -248,7 +247,9 @@ def _setup_codex() -> bool:
         try:
             result = subprocess.run(
                 [codex_cmd, "mcp", "add", MCP_SERVER_KEY, "--", MCP_SERVER_CMD],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if result.returncode == 0:
                 console.print("[green]✓[/green] Added to Codex CLI")
@@ -344,7 +345,9 @@ def _remove_codex() -> bool:
         try:
             result = subprocess.run(
                 [codex_cmd, "mcp", "remove", MCP_SERVER_KEY],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if result.returncode == 0:
                 console.print("[green]✓[/green] Removed from Codex CLI")
@@ -370,7 +373,9 @@ def _remove_claude_code() -> bool:
     try:
         result = subprocess.run(
             [claude_cmd, "mcp", "remove", "-s", "user", MCP_SERVER_KEY],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         if result.returncode == 0:
             console.print("[green]✓[/green] Removed from Claude Code")
@@ -426,23 +431,32 @@ def _setup_json() -> None:
     console.print("[bold]Generate MCP JSON config[/bold]\n")
     console.print("This generates a JSON snippet you can paste into any tool's MCP config.\n")
 
-    config_type = _prompt_numbered("Config type:", [
-        ("uvx", "uvx (no install required)"),
-        ("regular", "Regular (uses installed binary)"),
-    ])
+    config_type = _prompt_numbered(
+        "Config type:",
+        [
+            ("uvx", "uvx (no install required)"),
+            ("regular", "Regular (uses installed binary)"),
+        ],
+    )
 
     use_full_path = False
     if config_type == "regular":
-        path_choice = _prompt_numbered("\nCommand format:", [
-            ("name", f"Command name ({MCP_SERVER_CMD})"),
-            ("full", "Full path to binary"),
-        ])
+        path_choice = _prompt_numbered(
+            "\nCommand format:",
+            [
+                ("name", f"Command name ({MCP_SERVER_CMD})"),
+                ("full", "Full path to binary"),
+            ],
+        )
         use_full_path = path_choice == "full"
 
-    config_scope = _prompt_numbered("\nConfig scope:", [
-        ("existing", "Add to existing config (server entry only)"),
-        ("new", "New config file (includes mcpServers wrapper)"),
-    ])
+    config_scope = _prompt_numbered(
+        "\nConfig scope:",
+        [
+            ("existing", "Add to existing config (server entry only)"),
+            ("new", "New config file (includes mcpServers wrapper)"),
+        ],
+    )
 
     # Build the server entry
     if config_type == "uvx":
@@ -453,10 +467,7 @@ def _setup_json() -> None:
     elif use_full_path:
         binary_path = _find_mcp_server_path()
         if not binary_path:
-            console.print(
-                f"\n[yellow]Warning:[/yellow] {MCP_SERVER_CMD} not found in PATH, "
-                "using command name instead"
-            )
+            console.print(f"\n[yellow]Warning:[/yellow] {MCP_SERVER_CMD} not found in PATH, using command name instead")
             binary_path = MCP_SERVER_CMD
         server_entry = {"command": binary_path}
     else:
@@ -495,22 +506,13 @@ def _detect_tool(client_id: str) -> bool:
     checks = {
         "claude-desktop": lambda: _claude_desktop_config_path().parent.exists(),
         "claude-code": lambda: shutil.which("claude") is not None,
-        "gemini": lambda: (
-            shutil.which("gemini") is not None
-            or _gemini_config_path().parent.exists()
-        ),
+        "gemini": lambda: shutil.which("gemini") is not None or _gemini_config_path().parent.exists(),
         "cursor": lambda: Path.home().joinpath(".cursor").exists(),
         "windsurf": lambda: _windsurf_config_path().parent.exists(),
         "cline": lambda: Path.home().joinpath(".cline").exists(),
         "antigravity": lambda: _antigravity_config_path().parent.exists(),
-        "codex": lambda: (
-            shutil.which("codex") is not None
-            or _codex_config_path().exists()
-        ),
-        "opencode": lambda: (
-            shutil.which("opencode") is not None
-            or _opencode_config_path().exists()
-        ),
+        "codex": lambda: shutil.which("codex") is not None or _codex_config_path().exists(),
+        "opencode": lambda: shutil.which("opencode") is not None or _opencode_config_path().exists(),
     }
     check_fn = checks.get(client_id)
     if not check_fn:
@@ -529,7 +531,9 @@ def _is_already_configured(client_id: str) -> bool:
             if claude_cmd:
                 result = subprocess.run(
                     [claude_cmd, "mcp", "list"],
-                    capture_output=True, text=True, timeout=5,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 return MCP_SERVER_KEY in result.stdout.lower()
             return False
@@ -539,7 +543,9 @@ def _is_already_configured(client_id: str) -> bool:
                 try:
                     result = subprocess.run(
                         [codex_cmd, "mcp", "list"],
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     return MCP_SERVER_KEY in result.stdout.lower()
                 except Exception:
@@ -620,17 +626,18 @@ def _setup_all() -> None:
         return
 
     # Interactive selection
-    unconfigured_names = [
-        f"{detected[i][1]['name']} ({detected[i][0]})"
-        for i in configurable
-    ]
+    unconfigured_names = [f"{detected[i][1]['name']} ({detected[i][0]})" for i in configurable]
     console.print(f"\n[bold]Unconfigured tools:[/bold] {', '.join(unconfigured_names)}")
     console.print()
 
-    choice = Prompt.ask(
-        "Configure which tools? [cyan]all[/cyan] / comma-separated numbers / [cyan]none[/cyan]",
-        default="all",
-    ).strip().lower()
+    choice = (
+        Prompt.ask(
+            "Configure which tools? [cyan]all[/cyan] / comma-separated numbers / [cyan]none[/cyan]",
+            default="all",
+        )
+        .strip()
+        .lower()
+    )
 
     if choice in ("none", "n"):
         console.print("Cancelled.")
@@ -846,7 +853,9 @@ def setup_list():
                 try:
                     result = subprocess.run(
                         [claude_cmd, "mcp", "list"],
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     if MCP_SERVER_KEY in result.stdout.lower():
                         status = "[green]✓[/green]"
@@ -861,7 +870,9 @@ def setup_list():
                 try:
                     result = subprocess.run(
                         [codex_cmd, "mcp", "list"],
-                        capture_output=True, text=True, timeout=5,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
                     )
                     if MCP_SERVER_KEY in result.stdout.lower():
                         status = "[green]✓[/green]"

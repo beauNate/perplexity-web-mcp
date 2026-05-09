@@ -36,13 +36,17 @@ def cmd_doctor(args: list[str]) -> int:
         version = metadata.version("perplexity-web-mcp-cli")
         _check("perplexity-web-mcp-cli", True, version)
     except metadata.PackageNotFoundError:
-        all_ok = _check("perplexity-web-mcp-cli", False, "not installed", "pip install perplexity-web-mcp-cli") and all_ok
+        all_ok = (
+            _check("perplexity-web-mcp-cli", False, "not installed", "pip install perplexity-web-mcp-cli") and all_ok
+        )
 
     pwm_path = shutil.which("pwm")
     _check("pwm", pwm_path is not None, pwm_path or "not in PATH", "pip install -e '.[mcp]'")
 
     pwm_mcp_path = shutil.which("pwm-mcp")
-    all_ok = _check("pwm-mcp", pwm_mcp_path is not None, pwm_mcp_path or "not in PATH", "pip install -e '.[mcp]'") and all_ok
+    all_ok = (
+        _check("pwm-mcp", pwm_mcp_path is not None, pwm_mcp_path or "not in PATH", "pip install -e '.[mcp]'") and all_ok
+    )
 
     try:
         import perplexity_web_mcp.api.server  # noqa: F401
@@ -61,6 +65,7 @@ def cmd_doctor(args: list[str]) -> int:
         _check("Token", True, f"present ({token_source}, {len(token)} chars)")
 
         from perplexity_web_mcp.cli.auth import get_user_info
+
         user_info = get_user_info(token)
         if user_info:
             _check("Account", True, f"{user_info.email}")
@@ -74,11 +79,14 @@ def cmd_doctor(args: list[str]) -> int:
     print("\nRate Limits")
     if token_exists:
         from perplexity_web_mcp.rate_limits import fetch_rate_limits
+
         limits = fetch_rate_limits(token)
         if limits:
             pro_ok = limits.remaining_pro > 0
             research_ok = limits.remaining_research > 0
-            all_ok = _check("Pro Search", pro_ok, f"{limits.remaining_pro} remaining", "wait for weekly reset") and all_ok
+            all_ok = (
+                _check("Pro Search", pro_ok, f"{limits.remaining_pro} remaining", "wait for weekly reset") and all_ok
+            )
             _check("Deep Research", research_ok, f"{limits.remaining_research} remaining", "wait for monthly reset")
             _check("Create Files & Apps", True, f"{limits.remaining_labs} remaining")
             _check("Browser Agent", True, f"{limits.remaining_agentic_research} remaining")
@@ -90,6 +98,7 @@ def cmd_doctor(args: list[str]) -> int:
     # --- MCP Configuration ---
     print("\nMCP Configuration")
     from perplexity_web_mcp.cli.setup import _get_tools, _is_configured_compat
+
     tools = _get_tools()
     any_configured = False
     for tool in tools:
@@ -108,6 +117,7 @@ def cmd_doctor(args: list[str]) -> int:
     # --- Skill Installation ---
     print("\nSkill Installation")
     from perplexity_web_mcp.cli.skill import SKILL_DIR_NAME, _get_current_version, _get_installed_version, _get_targets
+
     skill_targets = _get_targets()
     current_ver = _get_current_version()
     any_skill = False

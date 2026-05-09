@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class ConversationConfig(BaseModel):
     """Default settings for a conversation.
-    
+
     Frozen to prevent accidental mutation after creation.
     """
 

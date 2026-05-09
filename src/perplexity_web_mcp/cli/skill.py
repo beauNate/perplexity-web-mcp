@@ -358,9 +358,7 @@ def _install_all(targets: list[SkillTarget], current_version: str) -> int:
         t.user_dir.mkdir(parents=True, exist_ok=True)
         if _install_skill(source, t.user_dir):
             if t.frontmatter_extras:
-                _inject_frontmatter_extras(
-                    t.user_dir / SKILL_DIR_NAME / "SKILL.md", t.frontmatter_extras
-                )
+                _inject_frontmatter_extras(t.user_dir / SKILL_DIR_NAME / "SKILL.md", t.frontmatter_extras)
             if existing_ver:
                 print(f"  ✓ {t.name}: v{existing_ver} → v{current_version}")
             else:
@@ -390,6 +388,7 @@ def _install_all(targets: list[SkillTarget], current_version: str) -> int:
 # ---------------------------------------------------------------------------
 # Public CLI handler
 # ---------------------------------------------------------------------------
+
 
 def cmd_skill(args: list[str]) -> int:
     """Handle: pwm skill [install|uninstall|list|show] [tool] [--level user|project]"""
@@ -505,9 +504,7 @@ def cmd_skill(args: list[str]) -> int:
             dest.mkdir(parents=True, exist_ok=True)
             if _install_skill(source, dest):
                 if target.frontmatter_extras:
-                    _inject_frontmatter_extras(
-                        dest / SKILL_DIR_NAME / "SKILL.md", target.frontmatter_extras
-                    )
+                    _inject_frontmatter_extras(dest / SKILL_DIR_NAME / "SKILL.md", target.frontmatter_extras)
                 print(f"  {tool_name}: Skill installed (v{current_version}) at {dest / SKILL_DIR_NAME}")
                 return 0
             return 1
@@ -557,9 +554,7 @@ def cmd_skill(args: list[str]) -> int:
                 if installed_ver != current_version:
                     if _install_skill(source, dest):
                         if t.frontmatter_extras:
-                            _inject_frontmatter_extras(
-                                dest / SKILL_DIR_NAME / "SKILL.md", t.frontmatter_extras
-                            )
+                            _inject_frontmatter_extras(dest / SKILL_DIR_NAME / "SKILL.md", t.frontmatter_extras)
                         level = "project" if str(Path.cwd()) in abs_path else "user"
                         print(f"  ✓ {t.name} ({level}): v{installed_ver} → v{current_version}")
                         updated_tools.append(t.name)

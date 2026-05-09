@@ -21,10 +21,10 @@ ENV_KEY = "PERPLEXITY_SESSION_TOKEN"
 
 def save_token(token: str) -> bool:
     """Save token to config directory and update environment.
-    
+
     Also sets the environment variable for the current process
     to ensure the new token is used immediately.
-    
+
     Returns True if successful, False otherwise.
     """
     try:
@@ -42,11 +42,11 @@ def save_token(token: str) -> bool:
 
 def load_token() -> str | None:
     """Load token from config directory or environment.
-    
+
     Priority:
     1. ~/.config/perplexity-web-mcp/token file (source of truth, updated by auth)
     2. PERPLEXITY_SESSION_TOKEN environment variable (fallback)
-    
+
     Returns token string or None if not found.
     """
     # Config file takes priority (it's updated by auth tools)

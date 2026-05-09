@@ -124,9 +124,7 @@ class TestCmdAsk:
 
     @patch("perplexity_web_mcp.cli.main.ask", return_value="response")
     @patch("perplexity_web_mcp.cli.main.resolve_model")
-    def test_model_and_thinking_flags(
-        self, mock_resolve: MagicMock, mock_ask: MagicMock
-    ) -> None:
+    def test_model_and_thinking_flags(self, mock_resolve: MagicMock, mock_ask: MagicMock) -> None:
         mock_resolve.return_value = MagicMock()
         _cmd_ask(["query", "-m", "gpt54", "-t"])
         mock_resolve.assert_called_once_with("gpt54", thinking=True)
@@ -153,6 +151,7 @@ class TestCmdResearch:
         assert "Research report" in capsys.readouterr().out
         # Should use DEEP_RESEARCH model
         from perplexity_web_mcp.models import Models
+
         assert mock_ask.call_args[0][1] is Models.DEEP_RESEARCH
 
     def test_no_query_returns_1(self, capsys: pytest.CaptureFixture) -> None:
@@ -177,9 +176,7 @@ class TestCmdUsage:
 
     @patch("perplexity_web_mcp.cli.main.get_limit_cache")
     @patch("perplexity_web_mcp.cli.main.load_token", return_value="valid-token")
-    def test_with_limits(
-        self, mock_token: MagicMock, mock_cache_fn: MagicMock, capsys: pytest.CaptureFixture
-    ) -> None:
+    def test_with_limits(self, mock_token: MagicMock, mock_cache_fn: MagicMock, capsys: pytest.CaptureFixture) -> None:
         from perplexity_web_mcp.rate_limits import RateLimits
 
         mock_cache = MagicMock()
@@ -401,4 +398,3 @@ class TestCmdCouncilErrorHandling:
         assert code == 1
         err = capsys.readouterr().err
         assert "429" in err or "rate limit" in err.lower()
-

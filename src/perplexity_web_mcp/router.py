@@ -228,10 +228,7 @@ class SmartRouter:
                 model_name="auto",
                 search_type="pro",
                 intent=Intent.STANDARD,
-                reason=(
-                    f"Standard query — pro {quota.pro_level.value}"
-                    f" ({quota.pro_remaining}/{self._pro_max})"
-                ),
+                reason=(f"Standard query — pro {quota.pro_level.value} ({quota.pro_remaining}/{self._pro_max})"),
                 was_downgraded=False,
                 quota_snapshot=snapshot,
             )
@@ -240,10 +237,7 @@ class SmartRouter:
             model_name="sonar",
             search_type="standard",
             intent=Intent.STANDARD,
-            reason=(
-                f"Standard query — pro exhausted, downgraded to Sonar 2"
-                f" ({quota.pro_remaining}/{self._pro_max})"
-            ),
+            reason=(f"Standard query — pro exhausted, downgraded to Sonar 2 ({quota.pro_remaining}/{self._pro_max})"),
             was_downgraded=True,
             quota_snapshot=snapshot,
         )
@@ -255,10 +249,7 @@ class SmartRouter:
                 model_name="claude_sonnet",
                 search_type="pro",
                 intent=Intent.DETAILED,
-                reason=(
-                    f"Detailed query — pro {quota.pro_level.value}"
-                    f" ({quota.pro_remaining}/{self._pro_max})"
-                ),
+                reason=(f"Detailed query — pro {quota.pro_level.value} ({quota.pro_remaining}/{self._pro_max})"),
                 was_downgraded=False,
                 quota_snapshot=snapshot,
             )
@@ -268,10 +259,7 @@ class SmartRouter:
                 model_name="auto",
                 search_type="pro",
                 intent=Intent.DETAILED,
-                reason=(
-                    f"Detailed query — pro critical, downgraded to auto"
-                    f" ({quota.pro_remaining}/{self._pro_max})"
-                ),
+                reason=(f"Detailed query — pro critical, downgraded to auto ({quota.pro_remaining}/{self._pro_max})"),
                 was_downgraded=True,
                 quota_snapshot=snapshot,
             )
@@ -280,10 +268,7 @@ class SmartRouter:
             model_name="sonar",
             search_type="standard",
             intent=Intent.DETAILED,
-            reason=(
-                f"Detailed query — pro exhausted, downgraded to Sonar 2"
-                f" ({quota.pro_remaining}/{self._pro_max})"
-            ),
+            reason=(f"Detailed query — pro exhausted, downgraded to Sonar 2 ({quota.pro_remaining}/{self._pro_max})"),
             was_downgraded=True,
             quota_snapshot=snapshot,
         )

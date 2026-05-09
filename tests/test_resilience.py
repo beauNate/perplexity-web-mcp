@@ -103,9 +103,7 @@ class TestRateLimiterLockNotHeldDuringSleep:
         elapsed = time.monotonic() - t0
 
         # Serialized would take ~0.1s. Parallel should be ~0.05s or less.
-        assert elapsed < 0.08, (
-            f"Elapsed {elapsed:.3f}s suggests lock held during sleep (expected <0.08s if parallel)"
-        )
+        assert elapsed < 0.08, f"Elapsed {elapsed:.3f}s suggests lock held during sleep (expected <0.08s if parallel)"
 
 
 # ============================================================================

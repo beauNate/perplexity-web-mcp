@@ -24,6 +24,7 @@ from perplexity_web_mcp.types import Response, SearchResultItem
 # Mock HTTPClient
 # ============================================================================
 
+
 class MockHTTPClient:
     """Minimal mock for Conversation tests (no network calls)."""
 
@@ -44,6 +45,7 @@ class MockHTTPClient:
 # 1. Perplexity Client Initialization
 # ============================================================================
 
+
 class TestPerplexityInit:
     """Test Perplexity client initialization."""
 
@@ -57,9 +59,7 @@ class TestPerplexityInit:
 
     @patch("perplexity_web_mcp.core.HTTPClient")
     @patch("perplexity_web_mcp.core.configure_logging")
-    def test_valid_token_creates_http_client(
-        self, mock_configure: MagicMock, mock_http_class: MagicMock
-    ) -> None:
+    def test_valid_token_creates_http_client(self, mock_configure: MagicMock, mock_http_class: MagicMock) -> None:
         mock_http = MagicMock()
         mock_http_class.return_value = mock_http
 
@@ -72,9 +72,7 @@ class TestPerplexityInit:
 
     @patch("perplexity_web_mcp.core.HTTPClient")
     @patch("perplexity_web_mcp.core.configure_logging")
-    def test_client_config_passed_to_http(
-        self, mock_configure: MagicMock, mock_http_class: MagicMock
-    ) -> None:
+    def test_client_config_passed_to_http(self, mock_configure: MagicMock, mock_http_class: MagicMock) -> None:
         config = ClientConfig(timeout=120, max_retries=5)
         Perplexity("token", config=config)
 
@@ -86,6 +84,7 @@ class TestPerplexityInit:
 # ============================================================================
 # 2. _validate_files
 # ============================================================================
+
 
 class TestValidateFiles:
     """Test _validate_files logic using tmp_path."""
@@ -181,6 +180,7 @@ class TestValidateFiles:
 # 3. _build_payload
 # ============================================================================
 
+
 class TestBuildPayload:
     """Test _build_payload builds correct dict from config."""
 
@@ -255,6 +255,7 @@ class TestBuildPayload:
 # 4. _format_citations
 # ============================================================================
 
+
 class TestFormatCitations:
     """Test citation mode handling (DEFAULT, CLEAN, MARKDOWN)."""
 
@@ -315,6 +316,7 @@ class TestFormatCitations:
 # 5. _parse_line
 # ============================================================================
 
+
 class TestParseLine:
     """Test SSE line parsing (bytes/str, valid/malformed JSON)."""
 
@@ -335,7 +337,7 @@ class TestParseLine:
 
     def test_malformed_json_returns_none(self) -> None:
         conv = self._conv()
-        line = 'data: {invalid json}'
+        line = "data: {invalid json}"
         result = conv._parse_line(line)
         assert result is None
 
@@ -361,6 +363,7 @@ class TestParseLine:
 # ============================================================================
 # 6. _process_data
 # ============================================================================
+
 
 class TestProcessData:
     """Test _process_data with different SSE data structures."""
@@ -423,9 +426,11 @@ class TestProcessData:
         # When answer is a JSON string matching JSON_OBJECT_PATTERN, it gets parsed
         inner_escaped = json.dumps({"answer": "Parsed", "thread_title": "TT"})
         data = {
-            "text": json.dumps([
-                {"step_type": "FINAL", "content": {"answer": inner_escaped}},
-            ]),
+            "text": json.dumps(
+                [
+                    {"step_type": "FINAL", "content": {"answer": inner_escaped}},
+                ]
+            ),
         }
         conv._process_data(data)
         assert conv._answer == "Parsed"
@@ -444,7 +449,9 @@ class TestProcessData:
 
     def test_missing_text_raises_response_parsing_error(self) -> None:
         conv = self._conv()
-        data = {"backend_uuid": "x"}  # No text, but we return early - actually no, we return early only if BOTH text and blocks missing
+        data = {
+            "backend_uuid": "x"
+        }  # No text, but we return early - actually no, we return early only if BOTH text and blocks missing
         # When "text" not in data and "blocks" not in data, we return early. So we never reach the loads.
         # So missing text with some other field that makes us NOT return early - we need "text" or "blocks".
         # If we have neither, we return. So the KeyError happens when we have "blocks" but not "text" - then loads(data["text"]) KeyErrors.
@@ -476,6 +483,7 @@ class TestProcessData:
 # ============================================================================
 # 7. _build_response
 # ============================================================================
+
 
 class TestBuildResponse:
     """Test _build_response builds Response from state."""

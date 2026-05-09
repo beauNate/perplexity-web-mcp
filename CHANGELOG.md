@@ -4,6 +4,13 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.11.2] - 2026-05-09
+
+### Added
+
+- **Codex CLI Integration** — Added `/v1/responses` fallback endpoints to natively support the OpenAI Codex CLI. Added instructions in documentation to bypass strict client-side model validation by using `--local-provider lmstudio`.
+
+---
 ## [0.11.1] - 2026-05-09
 
 ### Changed

@@ -30,8 +30,18 @@ class TestMappings:
     """Verify the shared mapping dictionaries are well-formed."""
 
     def test_model_map_has_all_expected_keys(self) -> None:
-        expected = {"auto", "sonar", "deep_research", "gpt54", "gpt55", "claude_sonnet",
-                    "claude_opus", "gemini_pro", "nemotron", "kimi_k26"}
+        expected = {
+            "auto",
+            "sonar",
+            "deep_research",
+            "gpt54",
+            "gpt55",
+            "claude_sonnet",
+            "claude_opus",
+            "gemini_pro",
+            "nemotron",
+            "kimi_k26",
+        }
         assert set(MODEL_MAP.keys()) == expected
 
     def test_model_names_matches_map_keys(self) -> None:
@@ -245,9 +255,7 @@ class TestSmartAsk:
 
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
-    def test_returns_smart_response(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock
-    ) -> None:
+    def test_returns_smart_response(self, mock_client_fn: MagicMock, mock_cache: MagicMock) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Smart answer"
         mock_conv.search_results = []
@@ -261,9 +269,7 @@ class TestSmartAsk:
 
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
-    def test_quick_intent_uses_sonar(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock
-    ) -> None:
+    def test_quick_intent_uses_sonar(self, mock_client_fn: MagicMock, mock_cache: MagicMock) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Quick answer"
         mock_conv.search_results = []
@@ -276,9 +282,7 @@ class TestSmartAsk:
 
     @patch("perplexity_web_mcp.shared.get_limit_cache")
     @patch("perplexity_web_mcp.shared.get_client")
-    def test_downgrades_when_exhausted(
-        self, mock_client_fn: MagicMock, mock_cache_fn: MagicMock
-    ) -> None:
+    def test_downgrades_when_exhausted(self, mock_client_fn: MagicMock, mock_cache_fn: MagicMock) -> None:
         limits = RateLimits(remaining_pro=0, remaining_research=0)
         mock_cache = MagicMock()
         mock_cache.get_rate_limits.return_value = limits
@@ -297,9 +301,7 @@ class TestSmartAsk:
 
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
-    def test_error_returns_smart_response_with_error(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock
-    ) -> None:
+    def test_error_returns_smart_response_with_error(self, mock_client_fn: MagicMock, mock_cache: MagicMock) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.side_effect = RuntimeError("Boom")
         mock_client_fn.return_value = mock_client
@@ -312,9 +314,7 @@ class TestSmartAsk:
 
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
-    def test_invalid_intent_defaults_to_standard(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock
-    ) -> None:
+    def test_invalid_intent_defaults_to_standard(self, mock_client_fn: MagicMock, mock_cache: MagicMock) -> None:
         mock_conv = MagicMock()
         mock_conv.answer = "Fallback answer"
         mock_conv.search_results = []
@@ -327,9 +327,7 @@ class TestSmartAsk:
 
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
-    def test_none_source_uses_writing_mode(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock
-    ) -> None:
+    def test_none_source_uses_writing_mode(self, mock_client_fn: MagicMock, mock_cache: MagicMock) -> None:
         from perplexity_web_mcp.enums import SearchFocus
 
         mock_conv = MagicMock()
@@ -362,8 +360,11 @@ class TestAskErrorPropagation:
     @patch("perplexity_web_mcp.shared.reset_client")
     @patch("perplexity_web_mcp.shared.get_client")
     def test_auth_error_raises(
-        self, mock_client_fn: MagicMock, mock_reset: MagicMock,
-        mock_load: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_reset: MagicMock,
+        mock_load: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.return_value.ask.side_effect = AuthenticationError()
@@ -375,7 +376,9 @@ class TestAskErrorPropagation:
     @patch("perplexity_web_mcp.shared.check_limits_before_query", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_rate_limit_error_raises(
-        self, mock_client_fn: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.return_value.ask.side_effect = RateLimitError()
@@ -388,7 +391,10 @@ class TestAskErrorPropagation:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_generic_error_still_returns_string(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.side_effect = RuntimeError("Network failure")
@@ -407,8 +413,11 @@ class TestSmartAskErrorPropagation:
     @patch("perplexity_web_mcp.shared.reset_client")
     @patch("perplexity_web_mcp.shared.get_client")
     def test_auth_error_raises(
-        self, mock_client_fn: MagicMock, mock_reset: MagicMock,
-        mock_load: MagicMock, mock_cache: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_reset: MagicMock,
+        mock_load: MagicMock,
+        mock_cache: MagicMock,
     ) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.return_value.ask.side_effect = AuthenticationError()
@@ -420,7 +429,9 @@ class TestSmartAskErrorPropagation:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_rate_limit_error_raises(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
     ) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.return_value.ask.side_effect = RateLimitError()
@@ -432,7 +443,9 @@ class TestSmartAskErrorPropagation:
     @patch("perplexity_web_mcp.shared.get_limit_cache", return_value=None)
     @patch("perplexity_web_mcp.shared.get_client")
     def test_generic_error_returns_smart_response(
-        self, mock_client_fn: MagicMock, mock_cache: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_cache: MagicMock,
     ) -> None:
         mock_client = MagicMock()
         mock_client.create_conversation.side_effect = RuntimeError("Boom")
@@ -457,10 +470,15 @@ class TestTokenRetryOnAuthError:
     @patch("perplexity_web_mcp.shared.reset_client")
     @patch("perplexity_web_mcp.shared.get_client")
     def test_ask_retries_when_token_changed(
-        self, mock_client_fn: MagicMock, mock_reset: MagicMock,
-        mock_load: MagicMock, mock_cache: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_reset: MagicMock,
+        mock_load: MagicMock,
+        mock_cache: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         from perplexity_web_mcp import shared
+
         shared._client_token = "old-stale-token"
 
         mock_conv_fail = MagicMock()
@@ -483,10 +501,14 @@ class TestTokenRetryOnAuthError:
     @patch("perplexity_web_mcp.shared.reset_client")
     @patch("perplexity_web_mcp.shared.get_client")
     def test_ask_does_not_retry_when_token_unchanged(
-        self, mock_client_fn: MagicMock, mock_reset: MagicMock,
-        mock_load: MagicMock, mock_limits: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_reset: MagicMock,
+        mock_load: MagicMock,
+        mock_limits: MagicMock,
     ) -> None:
         from perplexity_web_mcp import shared
+
         shared._client_token = "same-token"
 
         mock_client = MagicMock()
@@ -501,10 +523,14 @@ class TestTokenRetryOnAuthError:
     @patch("perplexity_web_mcp.shared.reset_client")
     @patch("perplexity_web_mcp.shared.get_client")
     def test_smart_ask_retries_when_token_changed(
-        self, mock_client_fn: MagicMock, mock_reset: MagicMock,
-        mock_load: MagicMock, mock_cache: MagicMock,
+        self,
+        mock_client_fn: MagicMock,
+        mock_reset: MagicMock,
+        mock_load: MagicMock,
+        mock_cache: MagicMock,
     ) -> None:
         from perplexity_web_mcp import shared
+
         shared._client_token = "old-stale-token"
 
         mock_conv_fail = MagicMock()
