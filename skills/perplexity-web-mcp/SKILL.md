@@ -300,6 +300,8 @@ pwm usage --refresh         # Force-refresh from server
 All query tools accept `source_focus`: `"none"`, `"web"`, `"academic"`, `"social"`, `"finance"`, `"all"`.
 Use `source_focus="none"` for model-only queries without web search.
 
+**Multi-Turn Conversations**: All query tools accept an optional `conversation_id` parameter. The server returns `[Conversation ID: <uuid>]` at the end of each response. Extract this UUID and pass it to the next query to maintain context across multiple turns.
+
 For full MCP tool parameters: See [references/mcp-tools.md](references/mcp-tools.md)
 
 ## Models

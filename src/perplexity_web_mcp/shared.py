@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from threading import Lock
 from typing import TYPE_CHECKING, Literal
+from uuid import uuid4
 
 from .config import ClientConfig, ConversationConfig
 from .core import Perplexity
@@ -16,6 +17,7 @@ from .enums import CitationMode, SearchFocus, SourceFocus
 from .models import Model, Models
 from .rate_limits import RateLimitCache
 from .router import Intent, SmartResponse, SmartRouter
+from .sessions import SessionStore
 from .token_store import get_token_or_raise, load_token
 
 
@@ -195,11 +197,15 @@ def get_limit_context_for_error() -> str:
 # Core ask function (shared by MCP and CLI)
 # ---------------------------------------------------------------------------
 
+_session_store = SessionStore()
+
+
 def _execute_query(
     query: str, model: Model, sources: list[SourceFocus],
     search_focus: SearchFocus = SearchFocus.WEB,
-) -> tuple[str, list[SearchResultItem]]:
-    """Run a single query attempt. Returns (answer_text, search_results).
+    conversation_id: str | None = None,
+) -> tuple[str, list[SearchResultItem], str | None]:
+    """Run a single query attempt. Returns (answer_text, search_results, conversation_id).
 
     Raises AuthenticationError, RateLimitError, or other exceptions on failure.
     """
@@ -212,6 +218,15 @@ def _execute_query(
             source_focus=sources,
         )
     )
+
+    if conversation_id:
+        session = _session_store.get(conversation_id)
+        if session:
+            conversation.restore_session(
+                backend_uuid=session.backend_uuid,
+                read_write_token=session.read_write_token,
+            )
+
     conversation.ask(query)
 
     cache = get_limit_cache()
@@ -219,7 +234,18 @@ def _execute_query(
         cache.invalidate_rate_limits()
 
     answer = conversation.answer or "No answer received"
-    return answer, conversation.search_results or []
+
+    new_conv_id = conversation_id
+    if conversation.uuid:
+        new_conv_id = conversation_id or str(uuid4())
+        _session_store.save(
+            conversation_id=new_conv_id,
+            backend_uuid=conversation.uuid,
+            read_write_token=conversation.read_write_token,
+            model=model,
+        )
+
+    return answer, conversation.search_results or [], new_conv_id
 
 
 _MODEL_DISPLAY_NAMES: dict[str, str] = {
@@ -269,7 +295,7 @@ def _format_quota_footer(model: Model) -> str:
     return "".join(parts)
 
 
-def ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
+def ask(query: str, model: Model, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Execute a query with a specific model.
 
     Returns the answer text with citations appended.
@@ -280,16 +306,17 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
 
     sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
     search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
+    new_conv_id: str | None = None
 
     try:
-        answer, search_results = _execute_query(query, model, sources, search_mode)
+        answer, search_results, new_conv_id = _execute_query(query, model, sources, search_mode, conversation_id)
     except AuthenticationError:
         old_token = _client_token
         reset_client()
         new_token = load_token()
         if new_token and new_token != old_token:
             try:
-                answer, search_results = _execute_query(query, model, sources, search_mode)
+                answer, search_results, new_conv_id = _execute_query(query, model, sources, search_mode, conversation_id)
             except (AuthenticationError, RateLimitError) as retry_err:
                 raise type(retry_err)(_format_error(retry_err)) from retry_err
             except Exception as retry_err:
@@ -309,6 +336,9 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web") -> str:
             response_parts.append(f"\n[{i}]: {url}")
 
     response_parts.append(_format_quota_footer(model))
+    
+    if new_conv_id:
+        response_parts.append(f"\n\n[Conversation ID: {new_conv_id}]")
 
     return "".join(response_parts)
 
@@ -373,6 +403,7 @@ def smart_ask(
     query: str,
     intent: str = "standard",
     source_focus: SourceFocusName = "web",
+    conversation_id: str | None = None,
 ) -> SmartResponse:
     """Execute a query with automatic quota-aware model routing.
 
@@ -394,21 +425,22 @@ def smart_ask(
     decision = _router.route(parsed_intent, limits)
     sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
     search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
+    new_conv_id: str | None = None
 
     try:
-        answer, search_results = _execute_query(query, decision.model, sources, search_mode)
+        answer, search_results, new_conv_id = _execute_query(query, decision.model, sources, search_mode, conversation_id)
     except AuthenticationError:
         old_token = _client_token
         reset_client()
         new_token = load_token()
         if new_token and new_token != old_token:
             try:
-                answer, search_results = _execute_query(query, decision.model, sources, search_mode)
+                answer, search_results, new_conv_id = _execute_query(query, decision.model, sources, search_mode, conversation_id)
             except (AuthenticationError, RateLimitError) as retry_err:
                 raise type(retry_err)(_format_error(retry_err)) from retry_err
             except Exception as retry_err:
                 return SmartResponse(
-                    answer=_format_error(retry_err), citations=[], routing=decision
+                    answer=_format_error(retry_err), citations=[], routing=decision, conversation_id=None
                 )
         else:
             raise
@@ -416,11 +448,11 @@ def smart_ask(
         raise
     except Exception as error:
         return SmartResponse(
-            answer=_format_error(error), citations=[], routing=decision
+            answer=_format_error(error), citations=[], routing=decision, conversation_id=None
         )
 
     citations = [r.url or "" for r in search_results]
-    return SmartResponse(answer=answer, citations=citations, routing=decision)
+    return SmartResponse(answer=answer, citations=citations, routing=decision, conversation_id=new_conv_id)
 
 
 # ---------------------------------------------------------------------------

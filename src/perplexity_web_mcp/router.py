@@ -114,6 +114,7 @@ class SmartResponse:
     answer: str
     citations: list[str]
     routing: RoutingDecision
+    conversation_id: str | None = None
 
     def format_metadata_block(self) -> str:
         r = self.routing

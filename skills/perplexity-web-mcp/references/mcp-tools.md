@@ -28,6 +28,7 @@ pplx_smart_query(
     query: str,                    # Required. The question to ask.
     intent: str = "standard",      # quick (1 Pro, Sonar 2), standard (1 Pro), detailed (1 Pro), research (1 Research)
     source_focus: str = "web",     # none, web, academic, social, finance, all
+    conversation_id: str = None,   # Optional. Pass ID from previous turn to persist context.
 ) -> str
 ```
 
@@ -45,6 +46,7 @@ pplx_query(
                                    # claude_opus, gemini_pro, nemotron, kimi_k26
     thinking: bool = False,        # Enable extended thinking (where supported)
     source_focus: str = "web",     # none, web, academic, social, finance, all
+    conversation_id: str = None,   # Optional. Pass ID from previous turn to persist context.
 ) -> str
 ```
 
@@ -57,6 +59,7 @@ For simple lookups, prefer `pplx_smart_query(intent='quick')` instead.
 pplx_ask(
     query: str,                    # Required. The question to ask.
     source_focus: str = "web",     # none, web, academic, social, finance, all
+    conversation_id: str = None,   # Optional. Pass ID from previous turn to persist context.
 ) -> str
 ```
 
@@ -80,6 +83,7 @@ All have the same signature and **each costs 1 Pro Search query**:
 pplx_<model>(
     query: str,                    # Required. The question to ask.
     source_focus: str = "web",     # none, web, academic, social, finance, all
+    conversation_id: str = None,   # Optional. Pass ID from previous turn to persist context.
 ) -> str
 ```
 
@@ -159,6 +163,16 @@ All query tools return a string containing:
    [1]: https://example.com/source1
    [2]: https://example.com/source2
    ```
+3. A quota footer and a `Conversation ID` footer:
+   ```
+   [Quota] Sonar 2 query completed (sonar) | Pro: 190 left | Research: 17 left
+   
+   [Conversation ID: 9c19882d-7481-4eef-b5df-beb4238003c7]
+   ```
+
+### Multi-Turn Conversations (Context Retention)
+The `[Conversation ID: <uuid>]` footer allows AI agents to persist context across multiple turns.
+When you receive this ID, extract it and pass it to the `conversation_id` parameter of your next query to continue the same thread. State is retained in memory by the MCP server for 1 hour.
 
 On error, the response starts with "Error" or "LIMIT REACHED" and includes
 diagnostic information and recovery instructions.

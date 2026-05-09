@@ -79,6 +79,7 @@ def pplx_query(
     model: ModelName = "auto",
     thinking: bool = False,
     source_focus: SourceFocusName = "web",
+    conversation_id: str | None = None,
 ) -> str:
     """Query Perplexity AI with explicit model selection. COSTS 1 PRO SEARCH QUERY per call.
 
@@ -95,13 +96,13 @@ def pplx_query(
                       social, finance, all
     """
     selected_model = resolve_model(model, thinking=thinking)
-    return ask(query, selected_model, source_focus)
+    return ask(query, selected_model, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_ask(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_ask(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Quick Q&A with auto model. COSTS 1 PRO SEARCH QUERY. Prefer pplx_smart_query(intent='quick') for simple lookups (Sonar 2 first)."""
-    return ask(query, Models.BEST, source_focus)
+    return ask(query, Models.BEST, source_focus, conversation_id)
 
 
 @mcp.tool
@@ -171,81 +172,81 @@ def pplx_research_status(task_id: str) -> str:
 
 
 @mcp.tool
-def pplx_sonar(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_sonar(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Sonar 2 — Perplexity's latest in-house model. Subject to your plan and Perplexity usage counters (see pplx_usage)."""
-    return ask(query, Models.SONAR, source_focus)
+    return ask(query, Models.SONAR, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_gpt54(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_gpt54(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """GPT-5.4 — OpenAI's versatile model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GPT_54, source_focus)
+    return ask(query, Models.GPT_54, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_gpt54_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_gpt54_thinking(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """GPT-5.4 Thinking — OpenAI's versatile model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GPT_54_THINKING, source_focus)
+    return ask(query, Models.GPT_54_THINKING, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_gpt55(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_gpt55(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """GPT-5.5 — OpenAI's latest model. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
-    return ask(query, Models.GPT_55, source_focus)
+    return ask(query, Models.GPT_55, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_gpt55_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_gpt55_thinking(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """GPT-5.5 Thinking — OpenAI's latest model with extended thinking. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
-    return ask(query, Models.GPT_55_THINKING, source_focus)
+    return ask(query, Models.GPT_55_THINKING, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_claude_sonnet(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_claude_sonnet(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Claude Sonnet 4.6 — Anthropic's fast model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.CLAUDE_46_SONNET, source_focus)
+    return ask(query, Models.CLAUDE_46_SONNET, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_claude_sonnet_think(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_claude_sonnet_think(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Claude Sonnet 4.6 Thinking — Anthropic's fast model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.CLAUDE_46_SONNET_THINKING, source_focus)
+    return ask(query, Models.CLAUDE_46_SONNET_THINKING, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_claude_opus(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_claude_opus(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Claude Opus 4.7 — Anthropic's most advanced reasoning model. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
-    return ask(query, Models.CLAUDE_47_OPUS, source_focus)
+    return ask(query, Models.CLAUDE_47_OPUS, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_claude_opus_think(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_claude_opus_think(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Claude Opus 4.7 Thinking — Anthropic's most advanced reasoning model with extended thinking. COSTS 1 PRO SEARCH QUERY. Requires Max subscription."""
-    return ask(query, Models.CLAUDE_47_OPUS_THINKING, source_focus)
+    return ask(query, Models.CLAUDE_47_OPUS_THINKING, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_gemini_pro_think(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_gemini_pro_think(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Gemini 3.1 Pro Thinking — Google's most advanced model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.GEMINI_31_PRO_THINKING, source_focus)
+    return ask(query, Models.GEMINI_31_PRO_THINKING, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_nemotron_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_nemotron_thinking(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Nemotron 3 Super — NVIDIA's Nemotron 3 Super 120B model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.NEMOTRON_3_SUPER, source_focus)
+    return ask(query, Models.NEMOTRON_3_SUPER, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_kimi_k26(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_kimi_k26(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Kimi K2.6 — Moonshot's advanced model. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.KIMI_K2_6, source_focus)
+    return ask(query, Models.KIMI_K2_6, source_focus, conversation_id)
 
 
 @mcp.tool
-def pplx_kimi_k26_thinking(query: str, source_focus: SourceFocusName = "web") -> str:
+def pplx_kimi_k26_thinking(query: str, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Kimi K2.6 Thinking — Moonshot's advanced model with extended thinking. COSTS 1 PRO SEARCH QUERY."""
-    return ask(query, Models.KIMI_K2_6_THINKING, source_focus)
+    return ask(query, Models.KIMI_K2_6_THINKING, source_focus, conversation_id)
 
 
 @mcp.tool
@@ -253,6 +254,7 @@ def pplx_smart_query(
     query: str,
     intent: str = "standard",
     source_focus: SourceFocusName = "web",
+    conversation_id: str | None = None,
 ) -> str:
     """RECOMMENDED DEFAULT TOOL. Quota-aware query — checks limits and picks the best model automatically.
 

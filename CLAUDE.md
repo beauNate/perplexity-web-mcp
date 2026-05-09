@@ -26,6 +26,7 @@ src/perplexity_web_mcp/
 ├── shared.py            # Shared query logic (MODEL_MAP, ask(), used by CLI + MCP)
 ├── council.py           # Model Council (parallel multi-model queries + synthesis)
 ├── core.py              # Perplexity client, Conversation class
+├── sessions.py          # Multi-turn context persistence and thread management
 ├── models.py            # Model definitions (GPT, Claude, Gemini, Grok, etc.)
 ├── config.py            # ClientConfig, ConversationConfig
 ├── enums.py             # CitationMode, SearchFocus, SourceFocus
@@ -50,6 +51,7 @@ src/perplexity_web_mcp/
 
 ```bash
 pwm ask "query" [-m MODEL] [-t] [-s SOURCE]  # Query Perplexity
+pwm chat [-m MODEL] [-t] [-s SOURCE]          # Multi-turn interactive chat
 pwm council "query" [-m MODELS] [-t] [-s SOURCE]  # Model Council (multi-model)
 pwm research "query" [-s SOURCE]              # Deep research
 pwm login [--check] [--email E --code C]      # Authentication

@@ -138,10 +138,26 @@ class Conversation:
 
         return self._backend_uuid
 
+    @property
+    def read_write_token(self) -> str | None:
+        """Token required for updating the conversation."""
+
+        return self._read_write_token
+
     def __iter__(self) -> Generator[Response, None, None]:
         if self._stream_generator is not None:
             yield from self._stream_generator
             self._stream_generator = None
+
+    def restore_session(self, backend_uuid: str, read_write_token: str | None = None) -> None:
+        """Inject prior session state to enable follow-up queries.
+        
+        Args:
+            backend_uuid: The conversation UUID from Perplexity
+            read_write_token: The token required for updating the conversation
+        """
+        self._backend_uuid = backend_uuid
+        self._read_write_token = read_write_token
 
     def ask(
         self,
