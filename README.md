@@ -5,11 +5,15 @@
 # Perplexity Web MCP & CLI
 
 <p align="center">
+  <a href="https://youtu.be/9xyClDvmoZ0">
+    <img src="https://img.youtube.com/vi/9xyClDvmoZ0/maxresdefault.jpg" alt="Perplexity Powerhouse + Model Council Demo" width="400">
+  </a>
+  &nbsp;&nbsp;&nbsp;
   <a href="https://youtu.be/ffyibtyk-LQ">
-    <img src="https://img.youtube.com/vi/ffyibtyk-LQ/maxresdefault.jpg" alt="Demo Overview" width="600">
+    <img src="https://img.youtube.com/vi/ffyibtyk-LQ/maxresdefault.jpg" alt="Demo Overview" width="400">
   </a>
   <br>
-  <sub>▶️ <strong>Watch the Demo Overview</strong></sub>
+  <sub>▶️ <strong>Watch: <a href="https://youtu.be/9xyClDvmoZ0">Latest Update Demo</a> | <a href="https://youtu.be/ffyibtyk-LQ">Original Overview</a></strong></sub>
 </p>
 
 MCP server, CLI, and API-compatible interface for Perplexity AI's web interface.
