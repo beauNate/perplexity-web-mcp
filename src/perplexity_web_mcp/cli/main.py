@@ -189,8 +189,16 @@ def _cmd_research_impl(query, source, json_output):
     model = Models.DEEP_RESEARCH
 
     try:
-        result = ask(query, model, source)
+        from rich.console import Console
+        console = Console(stderr=True)
+        with console.status("[bold cyan]Running deep research (this may take several minutes)...[/]"):
+            result = ask(query, model, source)
     except (AuthenticationError, RateLimitError) as e:
+        if json_output:
+            import orjson
+            error_data = {"error": str(e), "model": "deep_research", "source": source}
+            sys.stdout.buffer.write(orjson.dumps(error_data, option=orjson.OPT_INDENT_2))
+            sys.stdout.buffer.write(b"\n")
         print(str(e), file=sys.stderr)
         return 1
 

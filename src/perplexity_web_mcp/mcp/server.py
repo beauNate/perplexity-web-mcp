@@ -7,6 +7,8 @@ the MCP tool wrappers and auth tools (which are MCP-specific).
 
 from __future__ import annotations
 
+import threading
+import uuid
 from time import monotonic
 
 from fastmcp import FastMCP
@@ -44,7 +46,8 @@ mcp = FastMCP(
         "3. Only use 'standard' or 'detailed' intent when the question requires synthesis, "
         "comparison, multi-step reasoning, or very current data that Sonar 2 can't handle.\n"
         "4. Reserve pplx_deep_research for user-requested deep dives only — NEVER use it "
-        "autonomously without asking the user first.\n"
+        "autonomously without asking the user first. For complex research that might timeout, "
+        "use pplx_deep_research_start and poll with pplx_research_status instead.\n"
         "5. Avoid model-specific tools (pplx_gpt54, pplx_claude_sonnet, etc.) unless the "
         "user explicitly requests a specific model. Each call costs 1 Pro Search query.\n\n"
 
@@ -105,6 +108,66 @@ def pplx_ask(query: str, source_focus: SourceFocusName = "web") -> str:
 def pplx_deep_research(query: str, source_focus: SourceFocusName = "web") -> str:
     """Deep Research — in-depth reports. COSTS 1 DEEP RESEARCH QUERY (limited monthly pool, typically 5-10 total). Only use when the user explicitly requests deep research."""
     return ask(query, Models.DEEP_RESEARCH, source_focus)
+
+
+_research_tasks: dict[str, dict] = {}
+_research_lock = threading.Lock()
+
+
+def _run_research_task(task_id: str, query: str, source_focus: SourceFocusName) -> None:
+    try:
+        result = ask(query, Models.DEEP_RESEARCH, source_focus)
+        with _research_lock:
+            _research_tasks[task_id] = {"status": "completed", "result": result}
+    except Exception as e:
+        with _research_lock:
+            _research_tasks[task_id] = {"status": "error", "error": str(e)}
+
+
+@mcp.tool
+def pplx_deep_research_start(query: str, source_focus: SourceFocusName = "web") -> str:
+    """Start a deep research task asynchronously. COSTS 1 DEEP RESEARCH QUERY.
+
+    Use this instead of pplx_deep_research for complex queries to avoid connection timeouts.
+    Returns a task_id immediately. Poll pplx_research_status with the task_id to get the result.
+    """
+    task_id = str(uuid.uuid4())
+    with _research_lock:
+        _research_tasks[task_id] = {"status": "in_progress"}
+
+    thread = threading.Thread(
+        target=_run_research_task,
+        args=(task_id, query, source_focus),
+        daemon=True,
+    )
+    thread.start()
+
+    return f"Task started. Task ID: {task_id}. Poll pplx_research_status with this ID."
+
+
+@mcp.tool
+def pplx_research_status(task_id: str) -> str:
+    """Check the status of an asynchronous deep research task.
+
+    Returns 'in_progress' if the task is still running, the final research report if completed,
+    or an error message if it failed.
+    """
+    with _research_lock:
+        task = _research_tasks.get(task_id)
+        if not task:
+            return f"Error: Unknown task ID '{task_id}'."
+
+        status = task["status"]
+        if status == "in_progress":
+            return f"Status: in_progress (task_id: {task_id}). Poll again in 10-15 seconds."
+        elif status == "completed":
+            result = task.pop("result")
+            del _research_tasks[task_id]
+            return result
+        else:
+            error = task.get("error", "Unknown error")
+            del _research_tasks[task_id]
+            return f"Task failed: {error}"
 
 
 @mcp.tool
