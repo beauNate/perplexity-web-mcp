@@ -295,6 +295,33 @@ def _format_quota_footer(model: Model) -> str:
     return "".join(parts)
 
 
+def _execute_with_retry(
+    query: str,
+    model: Model,
+    source_focus: SourceFocusName,
+    conversation_id: str | None,
+) -> tuple[str, list[SearchResultItem], str | None]:
+    """Execute a query with automatic token retry on authentication failure."""
+    from .exceptions import AuthenticationError, RateLimitError
+
+    sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
+    search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
+
+    try:
+        return _execute_query(query, model, sources, search_mode, conversation_id)
+    except AuthenticationError:
+        old_token = _client_token
+        reset_client()
+        new_token = load_token()
+        if new_token and new_token != old_token:
+            try:
+                return _execute_query(query, model, sources, search_mode, conversation_id)
+            except (AuthenticationError, RateLimitError) as retry_err:
+                raise type(retry_err)(_format_error(retry_err)) from retry_err
+        else:
+            raise
+
+
 def ask(query: str, model: Model, source_focus: SourceFocusName = "web", conversation_id: str | None = None) -> str:
     """Execute a query with a specific model.
 
@@ -304,26 +331,11 @@ def ask(query: str, model: Model, source_focus: SourceFocusName = "web", convers
     """
     from .exceptions import AuthenticationError, RateLimitError
 
-    sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
-    search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
-    new_conv_id: str | None = None
-
     try:
-        answer, search_results, new_conv_id = _execute_query(query, model, sources, search_mode, conversation_id)
-    except AuthenticationError:
-        old_token = _client_token
-        reset_client()
-        new_token = load_token()
-        if new_token and new_token != old_token:
-            try:
-                answer, search_results, new_conv_id = _execute_query(query, model, sources, search_mode, conversation_id)
-            except (AuthenticationError, RateLimitError) as retry_err:
-                raise type(retry_err)(_format_error(retry_err)) from retry_err
-            except Exception as retry_err:
-                return _format_error(retry_err)
-        else:
-            raise
-    except RateLimitError:
+        answer, search_results, new_conv_id = _execute_with_retry(
+            query, model, source_focus, conversation_id
+        )
+    except (AuthenticationError, RateLimitError):
         raise
     except Exception as error:
         return _format_error(error)
@@ -423,28 +435,12 @@ def smart_ask(
         parsed_intent = Intent.STANDARD
 
     decision = _router.route(parsed_intent, limits)
-    sources = SOURCE_FOCUS_MAP.get(source_focus, [SourceFocus.WEB])
-    search_mode = SearchFocus.WRITING if source_focus == "none" else SearchFocus.WEB
-    new_conv_id: str | None = None
 
     try:
-        answer, search_results, new_conv_id = _execute_query(query, decision.model, sources, search_mode, conversation_id)
-    except AuthenticationError:
-        old_token = _client_token
-        reset_client()
-        new_token = load_token()
-        if new_token and new_token != old_token:
-            try:
-                answer, search_results, new_conv_id = _execute_query(query, decision.model, sources, search_mode, conversation_id)
-            except (AuthenticationError, RateLimitError) as retry_err:
-                raise type(retry_err)(_format_error(retry_err)) from retry_err
-            except Exception as retry_err:
-                return SmartResponse(
-                    answer=_format_error(retry_err), citations=[], routing=decision, conversation_id=None
-                )
-        else:
-            raise
-    except RateLimitError:
+        answer, search_results, new_conv_id = _execute_with_retry(
+            query, decision.model, source_focus, conversation_id
+        )
+    except (AuthenticationError, RateLimitError):
         raise
     except Exception as error:
         return SmartResponse(

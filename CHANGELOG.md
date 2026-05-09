@@ -4,6 +4,14 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.11.1] - 2026-05-09
+
+### Changed
+
+- **Code Refactoring** — Unified the duplicated token retry and source-focus parsing logic found in `ask()` and `smart_ask()` into a single shared helper function `_execute_with_retry` to improve maintainability.
+
+---
+
 ## [0.11.0] - 2026-05-09
 
 ### Added
