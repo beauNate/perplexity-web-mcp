@@ -200,6 +200,11 @@ QUERY TOOLS (each call costs 1 Pro Search query unless noted):
   All query tools accept source_focus: "none", "web", "academic", "social",
   "finance", "all". Use "none" for model-only queries without web search.
 
+  All query tools also accept an optional `conversation_id` (str) parameter. 
+  The server returns `[Conversation ID: <uuid>]` at the end of each response. 
+  Extract this UUID and pass it to the next query to maintain context across 
+  multiple turns. State is retained in memory for 1 hour.
+
 USAGE TOOL (1):
   pplx_usage(refresh=False)
       Returns remaining Pro Search, Deep Research, Labs, and Agent quotas.
