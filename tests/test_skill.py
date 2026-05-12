@@ -5,6 +5,7 @@ Uses tmp_path for all filesystem operations.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,7 +15,10 @@ from perplexity_web_mcp.cli.skill import (
     SKILL_DIR_NAME,
     SkillTarget,
     _get_installed_version,
+    _get_targets,
+    _hermes_home,
     _install_skill,
+    _is_tool_installed,
     _uninstall_skill,
     cmd_skill,
 )
@@ -73,7 +77,114 @@ class TestGetInstalledVersion:
 
 
 # ============================================================================
-# 2. _install_skill / _uninstall_skill
+# 2. _is_tool_installed
+# ============================================================================
+
+
+class TestIsToolInstalled:
+    """Test the two-signal tool detection logic."""
+
+    def test_detected_via_binary_on_path(self) -> None:
+        target = SkillTarget(
+            name="fake-tool", description="T",
+            user_dir=Path("/nonexistent/skills"), project_dir=".fake/skills",
+            binary="python3", root_dirs=[],
+        )
+        assert _is_tool_installed(target) is True
+
+    def test_detected_via_root_dir(self, tmp_path: Path) -> None:
+        root = tmp_path / ".fake-tool"
+        root.mkdir()
+        target = SkillTarget(
+            name="fake-tool", description="T",
+            user_dir=tmp_path / ".fake-tool" / "skills", project_dir=".fake/skills",
+            binary="definitely-not-a-real-binary-xyz", root_dirs=[root],
+        )
+        assert _is_tool_installed(target) is True
+
+    def test_not_detected_when_neither_signal(self) -> None:
+        target = SkillTarget(
+            name="fake-tool", description="T",
+            user_dir=Path("/nonexistent/skills"), project_dir=".fake/skills",
+            binary="definitely-not-a-real-binary-xyz",
+            root_dirs=[Path("/nonexistent/root")],
+        )
+        assert _is_tool_installed(target) is False
+
+    def test_no_binary_but_root_dir_exists(self, tmp_path: Path) -> None:
+        root = tmp_path / ".tool-config"
+        root.mkdir()
+        target = SkillTarget(
+            name="fake-tool", description="T",
+            user_dir=tmp_path / ".tool-config" / "skills", project_dir=".fake/skills",
+            root_dirs=[root],
+        )
+        assert _is_tool_installed(target) is True
+
+    def test_empty_root_dirs_and_no_binary(self) -> None:
+        target = SkillTarget(
+            name="other", description="Export",
+            user_dir=Path.home(), project_dir=".",
+        )
+        assert _is_tool_installed(target) is False
+
+
+# ============================================================================
+# 3. Platform helpers
+# ============================================================================
+
+
+class TestPlatformHelpers:
+    """Test _hermes_home."""
+
+    def test_hermes_home_default(self) -> None:
+        env = {k: v for k, v in os.environ.items() if k != "HERMES_HOME"}
+        with patch.dict("os.environ", env, clear=True):
+            assert _hermes_home() == Path.home() / ".hermes"
+
+    def test_hermes_home_custom_env(self, tmp_path: Path) -> None:
+        with patch.dict("os.environ", {"HERMES_HOME": str(tmp_path / "custom-hermes")}):
+            assert _hermes_home() == tmp_path / "custom-hermes"
+
+
+# ============================================================================
+# 4. Target registry
+# ============================================================================
+
+
+class TestGetTargets:
+    """Test that _get_targets includes expected entries."""
+
+    def test_hermes_target_exists(self) -> None:
+        targets = _get_targets()
+        names = [t.name for t in targets]
+        assert "hermes" in names
+
+    def test_hermes_target_paths(self) -> None:
+        targets = _get_targets()
+        hermes = next(t for t in targets if t.name == "hermes")
+        assert hermes.binary == "hermes"
+        assert hermes.project_dir == ".hermes/skills"
+        assert len(hermes.root_dirs) == 1
+
+    def test_all_targets_have_detection_metadata(self) -> None:
+        """Every real tool (not 'other') should have either binary or root_dirs."""
+        targets = _get_targets()
+        for t in targets:
+            if t.name == "other":
+                continue
+            has_signal = bool(t.binary) or bool(t.root_dirs)
+            assert has_signal, f"{t.name} has no binary or root_dirs for detection"
+
+    def test_list_shows_hermes(self, capsys: pytest.CaptureFixture) -> None:
+        assert cmd_skill(["list"]) == 0
+        out = capsys.readouterr().out
+        assert "hermes" in out
+        assert "Hermes Agent" in out
+
+
+# ============================================================================
+# 5. _install_skill / _uninstall_skill
 # ============================================================================
 
 
@@ -115,7 +226,7 @@ class TestInstallUninstall:
 
 
 # ============================================================================
-# 3. cmd_skill routing
+# 6. cmd_skill routing
 # ============================================================================
 
 

@@ -4,6 +4,20 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 
 ---
 
+## [0.11.3] - 2026-05-11
+
+### Fixed
+
+- **Skill install tool detection** — The `pwm skill install all` detection logic was checking whether the `skills/` subdirectory existed inside a tool's config folder, which only gets created *after* the first skill install. This falsely concluded tools like Claude Code or Cursor weren't installed even when they were. Replaced `_is_tool_detected()` with `_is_tool_installed()` which checks two independent signals (either sufficient): binary on PATH via `shutil.which()`, or the tool's root config directory existing (e.g. `~/.claude`, `~/.cursor`). Each tool now declares its `binary` name and `root_dirs` in the `SkillTarget` dataclass.
+- **Clearer detection warning** — "No supported tools detected" message now explains what was checked ("No binary on PATH and no config directory found") instead of the old confusing output.
+
+### Added
+
+- **Hermes Agent skill support** — Added NousResearch's Hermes Agent as a supported platform for skill install/uninstall/update. User-level path: `~/.hermes/skills/`, project-level: `.hermes/skills/`. Respects the `$HERMES_HOME` environment variable. Works on both macOS and Windows (`%USERPROFILE%\.hermes\skills\`).
+- **Tests for tool detection** — 11 new unit tests covering `_is_tool_installed` (binary detection, root dir detection, both-missing, no-signal), `_hermes_home` (default and `$HERMES_HOME` override), and target registry validation (Hermes presence, paths, detection metadata on all targets).
+
+---
+
 ## [0.11.2] - 2026-05-09
 
 ### Added
@@ -11,6 +25,7 @@ All notable changes to **perplexity-web-mcp-cli** are documented in this file.
 - **Codex CLI Integration** — Added `/v1/responses` fallback endpoints to natively support the OpenAI Codex CLI. Added instructions in documentation to bypass strict client-side model validation by using `--local-provider lmstudio`.
 
 ---
+
 ## [0.11.1] - 2026-05-09
 
 ### Changed

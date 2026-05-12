@@ -6,8 +6,9 @@ to the appropriate location for each supported AI platform.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import metadata
+import os
 from pathlib import Path
 import re
 import shutil
@@ -15,6 +16,11 @@ import sys
 
 
 SKILL_DIR_NAME = "perplexity-web-mcp"
+
+
+def _hermes_home() -> Path:
+    """Resolve the Hermes root directory, respecting $HERMES_HOME."""
+    return Path(os.environ.get("HERMES_HOME", Path.home() / ".hermes"))
 
 
 @dataclass(frozen=True)
@@ -25,71 +31,94 @@ class SkillTarget:
     description: str
     user_dir: Path
     project_dir: str
+    binary: str | None = None
+    root_dirs: list[Path] = field(default_factory=list)
     frontmatter_extras: dict[str, str] | None = None
-
-
-def _home() -> Path:
-    return Path.home()
 
 
 def _get_targets() -> list[SkillTarget]:
     """Return the list of platforms that support skills."""
-    home = _home()
+    home = Path.home()
+    hm_root = _hermes_home()
     return [
         SkillTarget(
             name="claude-code",
             description="Claude Code CLI and Desktop",
             user_dir=home / ".claude" / "skills",
             project_dir=".claude/skills",
+            binary="claude",
+            root_dirs=[home / ".claude"],
         ),
         SkillTarget(
             name="cursor",
             description="Cursor AI editor",
             user_dir=home / ".cursor" / "skills",
             project_dir=".cursor/skills",
+            binary="cursor",
+            root_dirs=[home / ".cursor"],
         ),
         SkillTarget(
             name="codex",
             description="OpenAI Codex CLI",
             user_dir=home / ".agents" / "skills",
             project_dir=".agents/skills",
+            binary="codex",
+            root_dirs=[home / ".codex", home / ".agents"],
         ),
         SkillTarget(
             name="opencode",
             description="OpenCode AI assistant",
             user_dir=home / ".config" / "opencode" / "skills",
             project_dir=".opencode/skills",
+            binary="opencode",
+            root_dirs=[home / ".config" / "opencode"],
         ),
         SkillTarget(
             name="gemini-cli",
             description="Google Gemini CLI",
             user_dir=home / ".agents" / "skills",
             project_dir=".agents/skills",
+            binary="gemini",
+            root_dirs=[home / ".agents", home / ".gemini"],
         ),
         SkillTarget(
             name="antigravity",
             description="Google Antigravity IDE",
             user_dir=home / ".gemini" / "antigravity" / "skills",
             project_dir=".agent/skills",
+            root_dirs=[home / ".gemini" / "antigravity"],
         ),
         SkillTarget(
             name="cline",
             description="Cline CLI terminal agent",
             user_dir=home / ".cline" / "skills",
             project_dir=".cline/skills",
+            binary="cline",
+            root_dirs=[home / ".cline"],
         ),
         SkillTarget(
             name="openclaw",
             description="OpenClaw AI agent framework",
             user_dir=home / ".openclaw" / "workspace" / "skills",
             project_dir=".openclaw/workspace/skills",
+            binary="openclaw",
+            root_dirs=[home / ".openclaw"],
         ),
         SkillTarget(
             name="alef-agent",
             description="Alef Agent AI framework",
             user_dir=home / ".alef-agent" / "workspace" / "skills",
             project_dir=".alef-agent/workspace/skills",
+            root_dirs=[home / ".alef-agent"],
             frontmatter_extras={"type": "tool", "status": "approved"},
+        ),
+        SkillTarget(
+            name="hermes",
+            description="Hermes Agent (NousResearch)",
+            user_dir=hm_root / "skills",
+            project_dir=".hermes/skills",
+            binary="hermes",
+            root_dirs=[hm_root],
         ),
         SkillTarget(
             name="other",
@@ -100,33 +129,17 @@ def _get_targets() -> list[SkillTarget]:
     ]
 
 
-def _is_tool_detected(target: SkillTarget) -> bool:
-    """Check if a tool appears to be installed on this system.
+def _is_tool_installed(target: SkillTarget) -> bool:
+    """Detect whether a tool is actually installed on this system.
 
-    Looks for the tool's config directory (parent of its skills dir) and
-    verifies the tool itself created content there -- not just our own
-    ``skills/`` subdirectory from a previous install.
-
-    Special case: Codex and Gemini CLI both use ``~/.agents/`` which is a
-    shared cross-tool directory, so we check for their respective binaries
-    (``codex`` / ``gemini``) in PATH instead.
+    Checks two signals (either is sufficient):
+    1. Binary on PATH (e.g. ``claude``, ``cursor``, ``opencode``, ``hermes``)
+    2. Tool's root config directory exists (e.g. ``~/.claude``, ``~/.cursor``)
     """
-    # Codex and Gemini CLI: check for binary since ~/.agents/ is a shared directory
-    if target.name == "codex":
-        return shutil.which("codex") is not None
-    if target.name == "gemini-cli":
-        return shutil.which("gemini") is not None
+    if target.binary and shutil.which(target.binary):
+        return True
 
-    config_root = target.user_dir.parent
-    if not config_root.is_dir():
-        return False
-    try:
-        for child in config_root.iterdir():
-            if child.name != "skills":
-                return True
-    except OSError:
-        return False
-    return False
+    return any(root_dir.is_dir() for root_dir in target.root_dirs)
 
 
 def _find_skill_source() -> Path | None:
@@ -163,10 +176,16 @@ def _get_installed_version(target_dir: Path) -> str | None:
         return None
     try:
         text = skill_file.read_text(encoding="utf-8")
-        for line in text.split("\n"):
-            line = line.strip()
-            if line.startswith("version:"):
-                return line.split(":", 1)[1].strip().strip('"').strip("'")
+        in_frontmatter = False
+        for raw_line in text.split("\n"):
+            stripped = raw_line.strip()
+            if stripped == "---":
+                if not in_frontmatter:
+                    in_frontmatter = True
+                    continue
+                break  # closing --- reached
+            if stripped.startswith("version:"):
+                return stripped.split(":", 1)[1].strip().strip('"').strip("'")
     except OSError:
         pass
     return None
@@ -304,6 +323,11 @@ cp -r {SKILL_DIR_NAME} ~/.openclaw/workspace/skills/
 cp -r {SKILL_DIR_NAME} ~/.alef-agent/workspace/skills/
 ```
 
+### Hermes Agent
+```bash
+cp -r {SKILL_DIR_NAME} ~/.hermes/skills/
+```
+
 ## Automated Installation
 
 Instead of manual copying, you can use:
@@ -311,7 +335,7 @@ Instead of manual copying, you can use:
 pwm skill install <tool>
 ```
 
-Where `<tool>` is: claude-code, cursor, codex, opencode, gemini-cli, antigravity, cline, openclaw, alef-agent.
+Where `<tool>` is: claude-code, cursor, codex, opencode, gemini-cli, antigravity, cline, openclaw, alef-agent, hermes.
 """
 
     (export_dir / "README.md").write_text(readme_content)
@@ -336,14 +360,14 @@ def _install_all(targets: list[SkillTarget], current_version: str) -> int:
     for t in targets:
         if t.name == "other":
             continue
-        if _is_tool_detected(t):
+        if _is_tool_installed(t):
             detected.append(t)
         else:
             not_detected.append(t.name)
 
     if not detected:
         print("  No supported tools detected on this system.")
-        print(f"  Looked for: {', '.join(t.name for t in targets)}")
+        print("  (No binary on PATH and no config directory found for any tool)")
         return 0
 
     installed: list[str] = []
@@ -405,7 +429,7 @@ def cmd_skill(args: list[str]) -> int:
             "  pwm skill show                          Display the skill content\n"
             "  pwm skill update                        Update all outdated skills\n"
             "\n"
-            "Tools: claude-code, cursor, codex, opencode, gemini-cli, antigravity, cline, openclaw, alef-agent, other, all\n"
+            "Tools: claude-code, cursor, codex, opencode, gemini-cli, antigravity, cline, openclaw, alef-agent, hermes, other, all\n"
             "\n"
             "Examples:\n"
             "  pwm skill list\n"
